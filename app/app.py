@@ -259,15 +259,6 @@ def format_month(series: pd.Series) -> pd.Series:
     return pd.to_datetime(series).dt.strftime("%Y-%m")
 
 
-def kpi_card(label: str, value: str, subtext: str = "") -> str:
-    return f"""
-    <div class='kpi-card'>
-      <div class='kpi-label'>{label}</div>
-      <div class='kpi-value'>{value}</div>
-      <div class='kpi-sub'>{subtext}</div>
-    </div>
-    """
-
 
 def rename_status(status: str) -> str:
     return STATUS_ZH.get(status, status)
@@ -300,9 +291,8 @@ SCENARIO_OPTIONS = {
 }
 
 st.title("Planner 決策 Dashboard")
-st.markdown(
-    "<div class='small-caption'>公開製造業 Forecast + Synthetic Capacity Planning。產能與客戶訂單皆為模擬情境，只用於展示 Planner 決策邏輯。</div>",
-    unsafe_allow_html=True,
+st.caption(
+    "公開製造業 Forecast + Synthetic Capacity Planning。產能與客戶訂單皆為模擬情境，只用於展示 Planner 決策邏輯。"
 )
 
 with st.sidebar:
@@ -326,37 +316,35 @@ allocation, order_summary, capacity_result = allocate_orders(
 )
 summary = summarize_scenario(scenario_name, multiplier, order_summary, allocation, capacity_result)
 
-st.markdown(
-    "<div class='kpi-row'>"
-    + kpi_card("需求情境", scenario_short, scenario_name)
-    + kpi_card("總需求", f"{summary['total_demand']:.2f} k", "Synthetic units")
-    + kpi_card("Late 訂單", f"{summary['late_orders']}", "部分數量跨過 Due Month")
-    + kpi_card("Late 數量", f"{summary['late_quantity']:.2f} k", "真正延後的數量")
-    + kpi_card("12月承接", f"{summary['december_spillover_quantity']:.2f} k", "Spillover")
-    + "</div>",
-    unsafe_allow_html=True,
-)
+kpi_cols = st.columns(5)
+with kpi_cols[0]:
+    st.metric("需求情境", scenario_short, scenario_name)
+with kpi_cols[1]:
+    st.metric("總需求", f"{summary['total_demand']:.2f} k", "Synthetic units")
+with kpi_cols[2]:
+    st.metric("Late 訂單", f"{summary['late_orders']}", "部分數量跨過交期月")
+with kpi_cols[3]:
+    st.metric("Late 數量", f"{summary['late_quantity']:.2f} k", "真正延後的數量")
+with kpi_cols[4]:
+    st.metric("12月承接", f"{summary['december_spillover_quantity']:.2f} k", "Spillover")
+
 
 if summary["late_orders"] > 0:
-    st.markdown(
-        "<div class='note-box'>此情境會產生 Late Orders。Late 訂單代表至少部分數量排到 requested due month 之後，不代表整張訂單全部延後。</div>",
-        unsafe_allow_html=True,
+    st.warning(
+        "此情境會產生 Late Orders。Late 訂單代表至少部分數量排到需求交期月之後，不代表整張訂單全部延後。"
     )
 elif summary["at_risk_orders"] > 0:
-    st.markdown(
-        "<div class='info-box'>此情境沒有 Late Order，但仍有 At Risk 訂單，原因是完成承諾後的 capacity slack 低於 10%。</div>",
-        unsafe_allow_html=True,
+    st.info(
+        "此情境沒有 Late Order，但仍有 At Risk 訂單，原因是完成承諾後的 capacity slack 低於 10%。"
     )
 else:
-    st.markdown(
-        "<div class='good-box'>此情境沒有 Late 或 At Risk 訂單。</div>",
-        unsafe_allow_html=True,
-    )
+    st.success("此情境沒有 Late 或 At Risk 訂單。")
+
 
 tab1, tab2, tab3, tab4 = st.tabs(["決策總覽", "Capacity", "Forecast 證據", "專案範圍"])
 
 with tab1:
-    st.markdown("<div class='section-title'>Order-level 決策表</div>", unsafe_allow_html=True)
+    st.subheader("Order-level 決策表")
     display_orders = order_summary.copy()
     display_orders["requested_due_month"] = format_month(display_orders["requested_due_month"])
     display_orders["feasible_commit_month"] = format_month(display_orders["feasible_commit_month"])
@@ -399,7 +387,7 @@ with tab1:
         },
     )
 
-    st.markdown("<div class='section-title'>Notebook Scenario 比較</div>", unsafe_allow_html=True)
+    st.subheader("Notebook Scenario 比較")
     scenario_summary = DATA["scenario_summary"].copy()
     scenario_summary["scenario"] = scenario_summary["scenario"].replace(
         {
@@ -436,7 +424,7 @@ with tab1:
     )
 
 with tab2:
-    st.markdown("<div class='section-title'>Monthly Capacity Loading</div>", unsafe_allow_html=True)
+    st.subheader("Monthly Capacity Loading")
     cap_plot = capacity_result.copy()
     cap_plot["month_label"] = format_month(cap_plot["month"])
     fig = go.Figure()
@@ -479,7 +467,7 @@ with tab2:
     )
     st.dataframe(cap_table, use_container_width=True, hide_index=True)
 
-    st.markdown("<div class='section-title'>Allocation Detail</div>", unsafe_allow_html=True)
+    st.subheader("Allocation Detail")
     alloc_display = allocation.copy()
     alloc_display["requested_due_month"] = format_month(alloc_display["requested_due_month"])
     alloc_display["allocation_month"] = format_month(alloc_display["allocation_month"])
@@ -498,7 +486,7 @@ with tab2:
     st.dataframe(alloc_display, use_container_width=True, hide_index=True)
 
 with tab3:
-    st.markdown("<div class='section-title'>Model Backtest Summary</div>", unsafe_allow_html=True)
+    st.subheader("Model Backtest Summary")
     model_df = model_summary.sort_values("wape_pct")
     model_fig = go.Figure()
     model_fig.add_bar(
@@ -542,7 +530,7 @@ with tab3:
     st.dataframe(eval_display, use_container_width=True, hide_index=True)
 
 with tab4:
-    st.markdown("<div class='section-title'>範圍與限制</div>", unsafe_allow_html=True)
+    st.subheader("範圍與限制")
     st.markdown(
         """
 - 公開製造業資料只支援 demand、backlog 與 forecast analysis。
@@ -552,12 +540,7 @@ with tab4:
 - Dashboard 不估算任何真實 ASE 客戶訂單、工廠產能或交期風險機率。
         """
     )
-    st.markdown("<div class='section-title'>Planning Decision</div>", unsafe_allow_html=True)
-    st.markdown(
-        """
-<div class='decision'>
-Base plan 可以完成所有 synthetic orders，但 9～11 月可用的新訂單產能已經全部用滿。由於 selected forecast model 在歷史驗證中有 17 / 18 次低估需求，交期承諾前應同時檢查 Upper Demand Scenario。Upper Scenario 下 O004 與 O006 會變成 Late，因此這兩張訂單應列為風險訂單；若無法增加或重新分配產能，就需要調整 priority、split delivery 或 commit month。
-</div>
-        """,
-        unsafe_allow_html=True,
+    st.subheader("Planning Decision")
+    st.info(
+        "Base plan 可以完成所有 synthetic orders，但 9～11 月可用的新訂單產能已經全部用滿。由於 selected forecast model 在歷史驗證中有 17 / 18 次低估需求，交期承諾前應同時檢查 Upper Demand Scenario。Upper Scenario 下 O004 與 O006 會變成 Late，因此這兩張訂單應列為風險訂單；若無法增加或重新分配產能，就需要調整 priority、split delivery 或 commit month。"
     )
