@@ -1,44 +1,38 @@
-# 生產規劃決策看板｜主管簡化版 v6
+# 生產排程決策看板 v7
 
-這版刻意拿掉大部分資料科學術語，把首頁改成一般主管先看得懂的順序：
+這一版完全以「非資料科學背景的生管主管」為使用者。
 
-1. 現在的結論是什麼？
-2. 哪張訂單要注意？
-3. 哪個月份最擠？
-4. 建議做什麼？
-5. 如果主管想追問，才展開 Forecast 分析依據。
+首頁只回答四件事：
 
-## 首頁三個情境
+1. 現在排得完嗎？
+2. 哪張訂單需要先處理？
+3. 哪個月份最容易卡住？
+4. 需求如果增加，結果會差多少？
 
-- **目前預估**：Point / Last Value Base Plan
-- **較保守預估（+2.96%）**：Historical Error 上修情境
-- **需求增加 10%**：Stress Test
+Forecast 模型、WAPE、Bias 等內容全部放到折疊區，只有主管追問時才展開。
 
-## 首頁不用懂的東西
+## 首頁用語
 
-WAPE、Bias、Holt-Winters 等分析不再放首頁。
-它們全部收在：
+- 「按期」：可以照原交期完成
+- 「先注意」：目前還沒延後，但安全空間很小
+- 「延後」：至少一部分數量會跨過原交期
+- 「已滿」：這個月可排新訂單的空間已用完
 
-`為什麼不能只看一個 Forecast？`
+## 三個情境
 
-的折疊區。
-
-## Forecast 邏輯
-
-- Last Value WAPE = 1.851%，四模型最低，所以保留為 Base。
-- 但 18 次 Backtest 中有 17 次低估，因此不能只看一個點。
-- Holt-Winters WAPE = 1.991%，略差，但 3 個月 Forecast 為 5771 / 5796 / 5804，帶出輕微上升趨勢。
-- 因此 Dashboard 把 Holt-Winters 當第二觀點，不取代 Base。
+- 目前需求
+- 需求多約 3%
+- 需求多 10%
 
 ## Render
 
-Build Command:
+Build:
 
 ```text
 pip install -r requirements.txt
 ```
 
-Start Command:
+Start:
 
 ```text
 streamlit run app/app.py --server.port $PORT --server.address 0.0.0.0
