@@ -1,4 +1,4 @@
-# Planner 決策 Dashboard（中文面試版）
+# Planner 決策 Dashboard
 
 這個 Dashboard 是 `electronic-components-planning` 專案的展示層，重點不是重新訓練模型，而是把 01～06 Notebook 的輸出整理成面試可以操作的 Planner Decision Support Demo。
 
