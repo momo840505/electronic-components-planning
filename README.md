@@ -1,143 +1,162 @@
 # Planner 決策 Dashboard
 
-這個 Dashboard 是 `electronic-components-planning` 專案的展示層，重點不是重新訓練模型，而是把 01～06 Notebook 的輸出整理成面試可以操作的 Planner Decision Support Demo。
+這個 Dashboard 是 `electronic-components-planning` 專案的互動展示層。它不重新訓練模型，而是把 01～06 Notebook 的正式輸出轉成比較接近 Planner 日常使用方式的畫面。
 
-## 這個 Dashboard 做什麼？
+核心流程：
 
-它展示一個完整 Planner 決策流程：
+`Forecast → 需求情境 → 產能 → 訂單排程 → 可承諾月份 → 按期 / 風險 / 延後`
 
-`Forecast → Demand Scenario → Capacity → Order Allocation → Commit Month → On Time / At Risk / Late`
+## 這版 Dashboard 有什麼互動？
 
-三個可切換情境：
+### 1. 需求情境
 
-| 情境 | 意義 | 主要結果 |
-|---|---|---|
-| 基準情境：Point Forecast | 使用 04 選出的 Last Value forecast 作 base plan | 0 Late、2 At Risk |
-| 上修情境：Upper Reference (+2.96%) | 使用 05 的 80th percentile historical error 作需求上修 | 2 Late、Late Quantity 21.37 k |
-| 壓力測試：+10% Demand Stress | 人工 what-if scenario | 2 Late、1 At Risk、Late Quantity 96 k |
+可以切換：
 
-## 重要限制
+- **基準：Point Forecast**
+- **上修：Upper Reference (+2.96%)**
+- **壓力測試：+10%**
+- **自訂 What-if：-5% ～ +15%**
 
-- 公開資料只用於 demand、backlog、forecast analysis。
-- Capacity、customer order book、priority、due month 都是 synthetic planning scenario。
-- Dashboard 不代表 ASE / 日月光真實客戶訂單、真實產能或真實交期。
-- Late order 代表該訂單至少部分數量排到 requested due month 之後，不代表整張訂單全部延誤。
+前三個情境會重新計算並自動檢查，確認是否與 06 Notebook 的固定輸出一致。
 
-## 本機啟動方式
+自訂 What-if 是即時模擬，不是 Notebook 固定結果。
 
-### 方法 A：雙擊啟動
+### 2. 顯示範圍 Filter
 
-Windows 直接雙擊：
+可以依下列條件篩選：
+
+- 狀態
+- 優先級
+- 需求交期月
+- 訂單
+
+這些 Filter **只改畫面要看哪些訂單，不會偷偷重排整體 Capacity**。
+
+### 3. 訂單風險互動
+
+可以選一張訂單，直接看到：
+
+- 需求交期月
+- 可承諾月份
+- 優先級
+- 承諾後餘裕
+- 為什麼是按期 / 風險 / 延後
+- 這張訂單實際被排到哪些月份
+
+### 4. Capacity 互動
+
+可以選月份查看：
+
+- 總產能
+- 既有負載
+- 安全保留
+- 新訂單可用產能
+
+並用堆疊圖顯示每個月的 Capacity 到底被誰占用。
+
+### 5. Forecast 證據
+
+Dashboard 會同步顯示：
+
+- Selected Model = Last Value
+- Backtest WAPE = 1.851%
+- Aggregate Bias = -1.80%
+- Under-Forecast = 17 / 18
+- Point Forecast / Upper / Lower Planning Reference
+
+## 名詞白話解釋
+
+| 名詞 | 白話意思 |
+|---|---|
+| 總產能 | 這個月最多可以做多少 |
+| 既有負載 | 這次新訂單進來前，原本就排好的工作 |
+| 安全保留 | 刻意保留、不拿來接一般新單的緩衝 |
+| 新訂單可用產能 | 總產能 - 既有負載 - 安全保留 |
+| 高優先級 | 同一交期月時優先排；只是模擬規則，不是真實客戶等級 |
+| 按期 | 不晚於交期月，而且完成後仍有至少 10% 餘裕 |
+| 風險 | 還能按期，但完成後餘裕低於 10% |
+| 延後 | 至少一部分數量被排到交期月之後 |
+| Late Quantity | 真正跨過交期月的那部分數量 |
+| Spillover | 前面月份放不下，往後月移動的數量 |
+
+## 三個 Notebook 固定情境結果
+
+| 情境 | 總需求 | 按期 | 風險 | 延後 | Late Quantity | 12月承接 |
+|---|---:|---:|---:|---:|---:|---:|
+| Point Forecast | 650.00 k | 4 | 2 | 0 | 0.00 k | 0.00 k |
+| Upper +2.96% | 669.24 k | 4 | 0 | 2 | 21.37 k | 19.24 k |
+| +10% Stress | 715.00 k | 3 | 1 | 2 | 96.00 k | 65.00 k |
+
+## 本機啟動
+
+Windows 可以直接雙擊：
 
 ```text
 run_dashboard.bat
 ```
 
-它會自動：
+或 PowerShell：
 
-1. 建立 `.venv`
-2. 安裝 `requirements.txt`
-3. 啟動 Streamlit
+```powershell
+cd C:\你的路徑\electronic-components-planning
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+.\.venv\Scripts\python.exe -m streamlit run app\app.py
+```
 
-成功後開啟：
+成功後開：
 
 ```text
 http://localhost:8501
 ```
 
-### 方法 B：PowerShell 手動啟動
+## Render 部署
 
-```powershell
-cd C:\你的路徑\planner_dashboard_render_zh_v2
-python -m venv .venv
-.\.venv\Scripts\python.exe -m pip install -r requirements.txt
-.\.venv\Scripts\python.exe -m streamlit run app\app.py
-```
-
-## Render 部署方式
-
-### 1. 建立 GitHub repo
-
-把資料夾內容推到 GitHub，repo 根目錄應包含：
+如果 Dashboard 放在 repo 根目錄：
 
 ```text
 app/
 data/
-assets/
+.streamlit/
 requirements.txt
 render.yaml
 README.md
 ```
 
-### 2. Render 設定
-
-到 Render：
+Render 設定：
 
 ```text
-New → Web Service
-```
-
-選擇 GitHub repo。
-
-### 3. Build / Start Command
-
-如果使用畫面手動設定：
-
-```text
-Build Command:
+Build Command
 pip install -r requirements.txt
 ```
 
 ```text
-Start Command:
+Start Command
 streamlit run app/app.py --server.port $PORT --server.address 0.0.0.0
 ```
 
-如果 Render 自動偵測 `render.yaml`，通常不用手動輸入。
+Root Directory 留白。
 
-### 4. 如果放在主專案子資料夾
-
-若 repo 結構是：
+Push 新 commit 後，Render 通常會自動部署；若沒有：
 
 ```text
-electronic-components-planning/
-├── notebooks/
-├── reports/
-└── dashboard/
-    ├── app/
-    ├── data/
-    ├── requirements.txt
-    └── render.yaml
+Manual Deploy → Deploy latest commit
 ```
 
-Render 的 Root Directory 要填：
+## 面試時怎麼 Demo
 
-```text
-dashboard
-```
+建議 2～4 分鐘：
 
-Build / Start Command 一樣使用上面的指令。
+1. 先選 **Point Forecast**：說明 0 Late，但有 2 張 At Risk，而且 9～11 月新訂單產能已滿。
+2. 切 **Upper +2.96%**：直接看到 O004 / O006 變 Late。
+3. 切 **+10% Stress**：Late Order 還是 2 張，但 Late Quantity 由 21.37 k 增加到 96 k。
+4. 點進「訂單風險」看 O004 或 O006，說明它為什麼跨月。
+5. 點「產能」說明既有負載、安全保留、新訂單可用產能。
+6. 如果主管想玩，可以切 **自訂 What-if**，讓需求變動後結果即時計算。
 
-## 面試 Demo 建議順序
+## 重要限制
 
-1. 先切 `Point Forecast`：說明 base plan 可以排完，但有 2 張 At Risk。
-2. 再切 `Upper Reference (+2.96%)`：說明需求只上修約 3%，O004 與 O006 就變 Late。
-3. 最後切 `+10% Demand Stress`：說明 Late Order 數量一樣是 2，但 Late Quantity 從 21.37 k 增加到 96 k。
-
-面試時重點可以說：
-
-> Point forecast 可作為 base plan，但因為 forecast evaluation 顯示模型有 under-forecast bias，所以交期承諾前應同步檢查 upper demand scenario。若需求落在上方情境，O004 與 O006 要提前列為風險訂單，並評估 capacity reallocation、split delivery 或 commit month 調整。
-
-## 需要注意的數字
-
-| 指標 | 結果 |
-|---|---:|
-| Selected model | Last Value |
-| Backtest WAPE | 1.851% |
-| Aggregate Bias | -1.80% |
-| Under-Forecast Count | 17 / 18 |
-| Upper Reference Multiplier | 1.0296 |
-| Point Scenario Late Orders | 0 |
-| Upper Scenario Late Orders | 2 |
-| Stress Scenario Late Quantity | 96 k |
-
+- Public manufacturing data 只用於 demand / backlog / forecast。
+- Capacity、Customer Order、Priority、Due Month 都是 Synthetic Scenario。
+- High Priority 不代表任何真實客戶等級。
+- Dashboard 不代表 ASE / 日月光真實產能、訂單或交期風險。
+- 自訂 What-if 只是模擬，不是新的 Forecast。
