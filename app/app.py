@@ -1,4 +1,3 @@
-
 from __future__ import annotations
 
 from pathlib import Path
@@ -22,33 +21,38 @@ PRIORITY_RANK = {"High": 0, "Normal": 1}
 AT_RISK_SLACK_THRESHOLD = 0.10
 
 # --------------------------------------------------
-# Visual style: soft glass cards / rounded dashboard
+# Visual style: lively pastel dashboard
 # --------------------------------------------------
 st.markdown(
     """
 <style>
 :root {
-  --text: #153047;
-  --muted: #6b7f91;
-  --blue: #0ea5e9;
+  --text: #20304a;
+  --muted: #66768a;
+  --blue: #3b82f6;
+  --cyan: #22d3ee;
+  --purple: #8b5cf6;
+  --pink: #ec4899;
+  --orange: #f59e0b;
   --green: #22c55e;
-  --yellow: #f59e0b;
   --red: #ef4444;
-  --panel: rgba(255,255,255,.88);
-  --border: rgba(255,255,255,.95);
-  --shadow: rgba(71,110,143,.14);
+  --panel: rgba(255,255,255,.90);
+  --border: rgba(255,255,255,.92);
+  --shadow: rgba(75,85,135,.16);
 }
 
 .stApp {
   background:
-    radial-gradient(circle at 8% 8%, rgba(255,218,121,.36), transparent 25%),
-    radial-gradient(circle at 92% 8%, rgba(125,211,252,.34), transparent 27%),
-    radial-gradient(circle at 48% 96%, rgba(134,239,172,.23), transparent 30%),
-    linear-gradient(135deg, #fffdf4 0%, #f4fbff 52%, #f8fff4 100%);
+    radial-gradient(circle at 4% 5%, rgba(251,113,133,.28), transparent 27%),
+    radial-gradient(circle at 96% 5%, rgba(96,165,250,.31), transparent 30%),
+    radial-gradient(circle at 10% 95%, rgba(167,139,250,.27), transparent 31%),
+    radial-gradient(circle at 90% 92%, rgba(52,211,153,.24), transparent 29%),
+    linear-gradient(135deg, #fff7f9 0%, #fbf7ff 34%, #f2f8ff 67%, #f3fff8 100%);
+  background-attachment: fixed;
 }
 
 .block-container {
-  padding-top: 3.1rem !important;
+  padding-top: 3rem !important;
   padding-bottom: 4rem !important;
   max-width: 1320px !important;
 }
@@ -59,23 +63,26 @@ st.markdown(
   font-size: clamp(2rem, 4vw, 3.3rem);
   font-weight: 900;
   letter-spacing: -1.2px;
-  color: var(--text);
   line-height: 1.08;
   margin: 0 0 .6rem 0;
+  background: linear-gradient(90deg, #2563eb 0%, #7c3aed 48%, #db2777 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
 
 .hero-subtitle {
   color: var(--muted);
   font-size: 1rem;
-  line-height: 1.65;
+  line-height: 1.7;
   max-width: 900px;
   margin-bottom: 1.3rem;
 }
 
 .glass {
-  background: var(--panel);
+  background: linear-gradient(145deg, rgba(255,255,255,.96), rgba(255,255,255,.80));
   border: 1px solid var(--border);
-  box-shadow: 0 16px 45px var(--shadow);
+  box-shadow: 0 14px 38px var(--shadow);
   border-radius: 24px;
   backdrop-filter: blur(14px);
 }
@@ -83,12 +90,13 @@ st.markdown(
 .summary-card {
   padding: 1.15rem 1.25rem;
   min-height: 145px;
+  border-top: 4px solid rgba(99,102,241,.55);
 }
 
 .summary-label {
   color: var(--muted);
   font-size: .86rem;
-  font-weight: 700;
+  font-weight: 800;
   margin-bottom: .35rem;
 }
 
@@ -120,20 +128,23 @@ st.markdown(
 
 .decision-body {
   font-size: .98rem;
-  line-height: 1.7;
-  color: #3a5368;
+  line-height: 1.75;
+  color: #3b5068;
 }
 
 .decision-safe {
-  background: linear-gradient(135deg, rgba(236,253,245,.95), rgba(255,255,255,.90));
+  background: linear-gradient(135deg, rgba(220,252,231,.96), rgba(240,253,250,.92));
+  border-color: rgba(74,222,128,.36);
 }
 
 .decision-watch {
-  background: linear-gradient(135deg, rgba(255,251,235,.97), rgba(255,255,255,.90));
+  background: linear-gradient(135deg, rgba(255,247,237,.97), rgba(254,249,195,.88));
+  border-color: rgba(251,191,36,.40);
 }
 
 .decision-risk {
-  background: linear-gradient(135deg, rgba(254,242,242,.97), rgba(255,255,255,.90));
+  background: linear-gradient(135deg, rgba(255,241,242,.97), rgba(253,242,248,.92));
+  border-color: rgba(244,114,182,.38);
 }
 
 .section-title {
@@ -143,10 +154,21 @@ st.markdown(
   margin: 2rem 0 .25rem 0;
 }
 
+.section-title::after {
+  content: "";
+  display: block;
+  width: 62px;
+  height: 4px;
+  margin-top: .45rem;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #60a5fa, #8b5cf6, #f472b6);
+}
+
 .section-sub {
   color: var(--muted);
   font-size: .92rem;
   margin-bottom: .9rem;
+  line-height: 1.6;
 }
 
 .order-card {
@@ -181,14 +203,20 @@ st.markdown(
 
 .order-action {
   margin-top:.55rem;
-  color:#1e3a8a;
+  color:#4338ca;
   font-size:.88rem;
-  font-weight:700;
+  font-weight:800;
 }
 
 .scenario-card {
   padding: 1rem 1.05rem;
   min-height: 135px;
+  transition: transform .18s ease, box-shadow .18s ease;
+}
+
+.scenario-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 18px 42px rgba(76,81,146,.18);
 }
 
 .scenario-name {
@@ -207,7 +235,7 @@ st.markdown(
 .scenario-copy {
   color:var(--muted);
   font-size:.86rem;
-  line-height:1.45;
+  line-height:1.5;
 }
 
 div[data-testid="stRadio"] > div {
@@ -215,22 +243,46 @@ div[data-testid="stRadio"] > div {
 }
 
 div[data-testid="stRadio"] label {
-  background: rgba(255,255,255,.88);
-  border: 1px solid rgba(203,213,225,.8);
+  background: rgba(255,255,255,.86);
+  border: 1px solid rgba(196,181,253,.72);
   border-radius: 999px;
-  padding: .38rem .75rem;
-  box-shadow: 0 5px 16px rgba(71,110,143,.08);
+  padding: .42rem .82rem;
+  box-shadow: 0 5px 16px rgba(76,81,146,.08);
+  transition: all .18s ease;
+}
+
+div[data-testid="stRadio"] label:hover {
+  border-color: rgba(139,92,246,.72);
+  box-shadow: 0 8px 20px rgba(99,102,241,.12);
+}
+
+div[data-testid="stRadio"] label:has(input:checked) {
+  background: linear-gradient(135deg, rgba(224,231,255,.98), rgba(252,231,243,.96));
+  border-color: rgba(139,92,246,.85);
+  color: #3730a3;
 }
 
 div[data-testid="stExpander"] {
-  background: rgba(255,255,255,.80);
+  background: rgba(255,255,255,.82);
   border-radius: 16px;
-  border: 1px solid rgba(226,232,240,.9);
+  border: 1px solid rgba(196,181,253,.56);
+  box-shadow: 0 6px 18px rgba(76,81,146,.06);
+  overflow: hidden;
+}
+
+div[data-testid="stExpander"] summary {
+  font-weight: 800;
+  color: #334155;
 }
 
 [data-testid="stDataFrame"] {
   border-radius: 16px;
   overflow: hidden;
+  border: 1px solid rgba(196,181,253,.45);
+}
+
+[data-testid="stCaptionContainer"] {
+  color: #748296;
 }
 
 @media (max-width: 900px) {
@@ -271,7 +323,6 @@ def fmt_month(v) -> str:
 
 
 def fmt_num(v: float) -> str:
-    # Main dashboard intentionally shows the original planning numbers without "k".
     if abs(v - round(v)) < 1e-9:
         return f"{int(round(v)):,}"
     return f"{v:,.2f}"
@@ -548,7 +599,7 @@ for col, (label, value, note) in zip([c1, c2, c3, c4], cards):
 # -----------------------------
 st.markdown('<div class="section-title">需要先處理的訂單</div>', unsafe_allow_html=True)
 st.markdown(
-    '<div class="section-sub">只把「先注意」或「已延後」的訂單拉出來，避免主管一開始被完整表格淹沒。</div>',
+    '<div class="section-sub">只把「先注意」或「已延後」的訂單拉出來，避免一開始被完整表格淹沒。</div>',
     unsafe_allow_html=True,
 )
 
@@ -613,28 +664,28 @@ fig.add_bar(
     x=cap_chart["月份"],
     y=cap_chart["existing_load"],
     name="原本已排工作",
-    marker_color="#8ea6ba",
+    marker_color="#94a3b8",
     hovertemplate="原本已排工作：%{y:.0f}<extra></extra>",
 )
 fig.add_bar(
     x=cap_chart["月份"],
     y=cap_chart["safety_reserve"],
     name="安全保留",
-    marker_color="#f6c453",
+    marker_color="#fbbf24",
     hovertemplate="安全保留：%{y:.0f}<extra></extra>",
 )
 fig.add_bar(
     x=cap_chart["月份"],
     y=cap_chart["allocated_new_orders"],
     name="本次新訂單",
-    marker_color="#39a7e8",
+    marker_color="#4f8ef7",
     hovertemplate="本次新訂單：%{y:.0f}<extra></extra>",
 )
 fig.add_bar(
     x=cap_chart["月份"],
     y=cap_chart["remaining_new_order_capacity"],
     name="剩餘空間",
-    marker_color="#72d39b",
+    marker_color="#34d399",
     hovertemplate="剩餘空間：%{y:.0f}<extra></extra>",
 )
 
@@ -692,7 +743,7 @@ for col, row in zip(capacity_cols, cap_chart.itertuples()):
 # -----------------------------
 st.markdown('<div class="section-title">需求變多時，結果會怎麼變？</div>', unsafe_allow_html=True)
 st.markdown(
-    '<div class="section-sub">不需要理解模型，只看需求變動後有沒有開始影響交期。</div>',
+    '<div class="section-sub">不用看複雜模型，只要看需求變動後，有沒有開始影響交期。</div>',
     unsafe_allow_html=True,
 )
 
@@ -732,7 +783,7 @@ for col, (label, mult) in zip(scols, scenario_specs):
         )
 
 # -----------------------------
-# Details: not interview-meta wording
+# Details
 # -----------------------------
 with st.expander("查看全部訂單"):
     full = summary.copy()
@@ -765,22 +816,22 @@ with st.expander("需求預測依據"):
 
     c1, c2 = st.columns(2)
     with c1:
-        st.markdown("**基準預估｜Last Value**")
-        st.write("歷史測試 WAPE：**1.851%**")
+        st.markdown("**基準預估｜最後一期數值延伸**")
+        st.write("歷史測試平均誤差：**1.851%**")
         st.write("未來三個月：**5,769 → 5,769 → 5,769**")
-        st.caption("整體誤差最低，所以作為 Base Plan。")
+        st.caption("整體誤差最低，所以拿來當主要排程基準。")
 
     with c2:
-        st.markdown("**趨勢參考｜Holt-Winters**")
-        st.write("歷史測試 WAPE：**1.991%**")
+        st.markdown("**趨勢參考｜趨勢型預估**")
+        st.write("歷史測試平均誤差：**1.991%**")
         st.write("未來三個月：**5,771 → 5,796 → 5,804**")
-        st.caption("整體略差，但會反映緩慢上升的趨勢。")
+        st.caption("整體略差，但可以補充觀察需求是否慢慢往上。")
 
     st.write(
-        f"近期 18 次驗證中，有 **17 次低估**；Aggregate Bias 為 **-1.80%**。"
+        "近期 18 次驗證中，有 **17 次低估**；整體平均大約低估 **1.80%**。"
     )
     st.caption(
-        "這代表基準預估可以用，但正式做交期判斷時，不宜只看一個點，還要一起看較保守情境。"
+        "意思是：基準預估可以用，但正式判斷交期時，不能只看一個數字，還要一起看較保守的需求情境。"
     )
 
     f = forecast.copy()
@@ -803,7 +854,7 @@ with st.expander("需求預測依據"):
     ffig.update_layout(
         height=330,
         xaxis=dict(type="category", title=""),
-        yaxis=dict(title="公開市場需求指標（USD mn）"),
+        yaxis=dict(title="公開市場需求指標（百萬美元）"),
         legend=dict(orientation="h", y=1.02, x=0),
         margin=dict(l=10, r=10, t=45, b=10),
         plot_bgcolor="rgba(255,255,255,0)",
