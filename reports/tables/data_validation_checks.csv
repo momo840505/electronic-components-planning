@@ -1,0 +1,8 @@
+check,passed
+required_columns_present,True
+no_duplicate_dates,True
+dates_are_valid,True
+new_orders_non_negative,True
+shipments_non_negative,True
+unfilled_orders_non_negative,True
+inventories_non_negative,True

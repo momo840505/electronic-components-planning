@@ -1,0 +1,10 @@
+scenario,order_id,customer,priority,requested_due_month,allocation_month,allocated_quantity
+Upper Planning Reference,O001,Customer_A,High,2026-09-01,2026-09-01,123.55132510898017
+Upper Planning Reference,O002,Customer_B,Normal,2026-09-01,2026-09-01,61.77566255449008
+Upper Planning Reference,O003,Customer_C,High,2026-10-01,2026-09-01,24.67301233652975
+Upper Planning Reference,O003,Customer_C,High,2026-10-01,2026-10-01,109.17425653153211
+Upper Planning Reference,O004,Customer_D,Normal,2026-10-01,2026-10-01,100.82574346846789
+Upper Planning Reference,O004,Customer_D,Normal,2026-10-01,2026-11-01,2.1336941223489134
+Upper Planning Reference,O005,Customer_E,High,2026-11-01,2026-11-01,154.4391563862252
+Upper Planning Reference,O006,Customer_F,Normal,2026-11-01,2026-11-01,73.4271494914259
+Upper Planning Reference,O006,Customer_F,Normal,2026-11-01,2026-12-01,19.23634434030923

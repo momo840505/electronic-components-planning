@@ -1,0 +1,7 @@
+order_id,quantity_point,commit_point,status_point,quantity_upper,commit_upper,status_upper,quantity_stress,commit_stress,status_stress,customer,priority,requested_due_month
+O001,120.0,2026-09-01,On Time,123.55132510898017,2026-09-01,On Time,132.0,2026-09-01,On Time,Customer_A,High,2026-09-01
+O002,60.0,2026-09-01,On Time,61.77566255449008,2026-09-01,On Time,66.0,2026-09-01,At Risk,Customer_B,Normal,2026-09-01
+O003,130.0,2026-10-01,On Time,133.84726886806186,2026-10-01,On Time,143.0,2026-10-01,On Time,Customer_C,High,2026-10-01
+O004,100.0,2026-10-01,At Risk,102.9594375908168,2026-11-01,Late,110.00000000000001,2026-11-01,Late,Customer_D,Normal,2026-10-01
+O005,150.0,2026-11-01,On Time,154.4391563862252,2026-11-01,On Time,165.0,2026-11-01,On Time,Customer_E,High,2026-11-01
+O006,90.0,2026-11-01,At Risk,92.66349383173512,2026-12-01,Late,99.00000000000001,2026-12-01,Late,Customer_F,Normal,2026-11-01

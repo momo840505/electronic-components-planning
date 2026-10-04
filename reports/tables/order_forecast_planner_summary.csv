@@ -1,0 +1,11 @@
+metric,value
+Latest actual month,2026-08
+Latest New Orders (USD mn),5769.0
+Latest Shipments (USD mn),5625.0
+Latest Backlog (USD mn),19021.0
+Latest Backlog Coverage (months),3.4
+Latest 3M Book-to-Bill,1.023
+Selected Forecast Model,last_value
+Backtest WAPE,1.85%
+3M Forecast Average (USD mn),5769.0
+Forecast Avg vs Latest Actual,0.00%

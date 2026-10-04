@@ -1,0 +1,5 @@
+model,wape_pct,mae,smape_pct
+last_value,1.851,98.778,1.862
+holt_winters,1.991,106.288,2.008
+xgboost_direct,4.164,222.218,4.229
+seasonal_naive,7.471,398.722,7.728

@@ -1,0 +1,7 @@
+scenario,order_id,customer,priority,base_quantity,scenario_quantity,requested_due_month,feasible_commit_month,remaining_unscheduled,slack_after_commit_pct,status
+Point Forecast,O001,Customer_A,High,120.0,120.0,2026-09-01,2026-09-01,0.0,0.42857142857142855,On Time
+Point Forecast,O002,Customer_B,Normal,60.0,60.0,2026-09-01,2026-09-01,0.0,0.14285714285714285,On Time
+Point Forecast,O003,Customer_C,High,130.0,130.0,2026-10-01,2026-10-01,0.0,0.5238095238095238,On Time
+Point Forecast,O004,Customer_D,Normal,100.0,100.0,2026-10-01,2026-10-01,0.0,0.047619047619047616,At Risk
+Point Forecast,O005,Customer_E,High,150.0,150.0,2026-11-01,2026-11-01,0.0,0.391304347826087,On Time
+Point Forecast,O006,Customer_F,Normal,90.0,90.0,2026-11-01,2026-11-01,0.0,0.0,At Risk

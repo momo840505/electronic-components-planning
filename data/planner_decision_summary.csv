@@ -1,0 +1,9 @@
+metric,value
+Point Forecast Model,last_value
+Pooled Backtest WAPE,1.851%
+Historical Aggregate Bias,-1.80%
+Upper Reference Demand Multiplier,1.0296
+Point Scenario Late Orders,0
+Upper Reference Late Orders,2
++10% Stress Late Orders,2
+Planning Interpretation,Use point forecast for the base plan; review upper-reference and stress scenarios before committing delivery when capacity slack is low.

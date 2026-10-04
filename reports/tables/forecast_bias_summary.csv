@@ -1,0 +1,10 @@
+metric,value
+Selected model,last_value
+Backtest observations,18
+Mean Error (USD mn),-95.89
+Aggregate Bias,-1.80%
+Mean Absolute Error (USD mn),98.78
+Mean Absolute Percentage Error,1.84%
+Over-Forecast count,1
+Under-Forecast count,17
+Exact count,0

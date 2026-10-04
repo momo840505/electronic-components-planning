@@ -1,0 +1,6 @@
+series,series_id,row_count,date_start,date_end,duplicate_dates,missing_dates,missing_values
+new_orders,A34HNO,415,1992-02-01,2026-08-01,0,0,0
+shipments,A34HVS,416,1992-01-01,2026-08-01,0,0,0
+unfilled_orders,A34HUO,416,1992-01-01,2026-08-01,0,0,0
+inventories,A34HTI,416,1992-01-01,2026-08-01,0,0,0
+industrial_production,IPG3344S,656,1972-01-01,2026-08-01,0,0,0

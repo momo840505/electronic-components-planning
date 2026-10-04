@@ -1,0 +1,27 @@
+scenario,order_id,customer,priority,requested_due_month,allocation_month,allocated_quantity
+Point Forecast,O001,Customer_A,High,2026-09-01,2026-09-01,120.0
+Point Forecast,O002,Customer_B,Normal,2026-09-01,2026-09-01,60.0
+Point Forecast,O003,Customer_C,High,2026-10-01,2026-09-01,30.0
+Point Forecast,O003,Customer_C,High,2026-10-01,2026-10-01,100.0
+Point Forecast,O004,Customer_D,Normal,2026-10-01,2026-10-01,100.0
+Point Forecast,O005,Customer_E,High,2026-11-01,2026-10-01,10.0
+Point Forecast,O005,Customer_E,High,2026-11-01,2026-11-01,140.0
+Point Forecast,O006,Customer_F,Normal,2026-11-01,2026-11-01,90.0
+Upper Planning Reference,O001,Customer_A,High,2026-09-01,2026-09-01,123.55132511700468
+Upper Planning Reference,O002,Customer_B,Normal,2026-09-01,2026-09-01,61.77566255850234
+Upper Planning Reference,O003,Customer_C,High,2026-10-01,2026-09-01,24.67301232449298
+Upper Planning Reference,O003,Customer_C,High,2026-10-01,2026-10-01,109.17425655226208
+Upper Planning Reference,O004,Customer_D,Normal,2026-10-01,2026-10-01,100.82574344773792
+Upper Planning Reference,O004,Customer_D,Normal,2026-10-01,2026-11-01,2.1336941497659723
+Upper Planning Reference,O005,Customer_E,High,2026-11-01,2026-11-01,154.43915639625584
+Upper Planning Reference,O006,Customer_F,Normal,2026-11-01,2026-11-01,73.42714945397819
+Upper Planning Reference,O006,Customer_F,Normal,2026-11-01,2026-12-01,19.236344383775318
++10% Demand Stress,O001,Customer_A,High,2026-09-01,2026-09-01,132.0
++10% Demand Stress,O002,Customer_B,Normal,2026-09-01,2026-09-01,66.0
++10% Demand Stress,O003,Customer_C,High,2026-10-01,2026-09-01,12.0
++10% Demand Stress,O003,Customer_C,High,2026-10-01,2026-10-01,131.0
++10% Demand Stress,O004,Customer_D,Normal,2026-10-01,2026-10-01,79.0
++10% Demand Stress,O004,Customer_D,Normal,2026-10-01,2026-11-01,31.000000000000014
++10% Demand Stress,O005,Customer_E,High,2026-11-01,2026-11-01,165.0
++10% Demand Stress,O006,Customer_F,Normal,2026-11-01,2026-11-01,34.0
++10% Demand Stress,O006,Customer_F,Normal,2026-11-01,2026-12-01,65.00000000000001

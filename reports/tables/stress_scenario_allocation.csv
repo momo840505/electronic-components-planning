@@ -1,0 +1,10 @@
+scenario,order_id,customer,priority,requested_due_month,allocation_month,allocated_quantity
++10% Demand Stress,O001,Customer_A,High,2026-09-01,2026-09-01,132.0
++10% Demand Stress,O002,Customer_B,Normal,2026-09-01,2026-09-01,66.0
++10% Demand Stress,O003,Customer_C,High,2026-10-01,2026-09-01,12.0
++10% Demand Stress,O003,Customer_C,High,2026-10-01,2026-10-01,131.0
++10% Demand Stress,O004,Customer_D,Normal,2026-10-01,2026-10-01,79.0
++10% Demand Stress,O004,Customer_D,Normal,2026-10-01,2026-11-01,31.000000000000014
++10% Demand Stress,O005,Customer_E,High,2026-11-01,2026-11-01,165.0
++10% Demand Stress,O006,Customer_F,Normal,2026-11-01,2026-11-01,34.0
++10% Demand Stress,O006,Customer_F,Normal,2026-11-01,2026-12-01,65.00000000000001

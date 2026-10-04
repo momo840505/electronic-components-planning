@@ -1,0 +1,7 @@
+scenario,order_id,customer,priority,base_quantity,scenario_quantity,requested_due_month,feasible_commit_month,remaining_unscheduled,slack_after_commit_pct,status
++10% Demand Stress,O001,Customer_A,High,120.0,132.0,2026-09-01,2026-09-01,0.0,0.37142857142857144,On Time
++10% Demand Stress,O002,Customer_B,Normal,60.0,66.0,2026-09-01,2026-09-01,0.0,0.05714285714285714,At Risk
++10% Demand Stress,O003,Customer_C,High,130.0,143.0,2026-10-01,2026-10-01,0.0,0.3761904761904762,On Time
++10% Demand Stress,O004,Customer_D,Normal,100.0,110.00000000000001,2026-10-01,2026-11-01,0.0,0.8652173913043478,Late
++10% Demand Stress,O005,Customer_E,High,150.0,165.0,2026-11-01,2026-11-01,0.0,0.14782608695652175,On Time
++10% Demand Stress,O006,Customer_F,Normal,90.0,99.00000000000001,2026-11-01,2026-12-01,0.0,0.7045454545454546,Late

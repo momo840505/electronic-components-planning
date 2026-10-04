@@ -1,0 +1,12 @@
+metric,value
+Selected Model,last_value
+Pooled Backtest WAPE,1.851%
+Aggregate Bias,-1.80%
+Over-Forecast Count,1
+Under-Forecast Count,17
+Worst Horizon by MAPE,3
+Worst Fold by WAPE,1
+Worst Fold WAPE,3.221%
+Maximum Single-Month APE,4.29%
+80th Percentile APE,2.96%
+Best vs Runner-up WAPE Gap,0.141 pp

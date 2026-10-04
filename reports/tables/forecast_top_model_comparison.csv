@@ -1,0 +1,7 @@
+metric,value
+Best model,last_value
+Best WAPE,1.851%
+Runner-up model,holt_winters
+Runner-up WAPE,1.991%
+Absolute WAPE difference,0.141 percentage points
+Relative WAPE improvement,7.07%

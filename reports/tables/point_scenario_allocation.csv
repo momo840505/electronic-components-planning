@@ -1,0 +1,9 @@
+scenario,order_id,customer,priority,requested_due_month,allocation_month,allocated_quantity
+Point Forecast,O001,Customer_A,High,2026-09-01,2026-09-01,120.0
+Point Forecast,O002,Customer_B,Normal,2026-09-01,2026-09-01,60.0
+Point Forecast,O003,Customer_C,High,2026-10-01,2026-09-01,30.0
+Point Forecast,O003,Customer_C,High,2026-10-01,2026-10-01,100.0
+Point Forecast,O004,Customer_D,Normal,2026-10-01,2026-10-01,100.0
+Point Forecast,O005,Customer_E,High,2026-11-01,2026-10-01,10.0
+Point Forecast,O005,Customer_E,High,2026-11-01,2026-11-01,140.0
+Point Forecast,O006,Customer_F,Normal,2026-11-01,2026-11-01,90.0

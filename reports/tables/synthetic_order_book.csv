@@ -1,0 +1,7 @@
+order_id,customer,quantity,requested_due_month,priority
+O001,Customer_A,120.0,2026-09-01,High
+O002,Customer_B,60.0,2026-09-01,Normal
+O003,Customer_C,130.0,2026-10-01,High
+O004,Customer_D,100.0,2026-10-01,Normal
+O005,Customer_E,150.0,2026-11-01,High
+O006,Customer_F,90.0,2026-11-01,Normal

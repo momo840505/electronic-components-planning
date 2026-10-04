@@ -1,0 +1,4 @@
+scenario,demand_multiplier,total_demand,on_time_orders,at_risk_orders,late_orders,unscheduled_orders,late_quantity,peak_new_order_utilization_pct,december_spillover_quantity
+Point Forecast,1.0,650.0,4,2,0,0,0.0,100.0,0.0
+Upper Planning Reference,1.029594375908168,669.2363443403093,4,0,2,0,21.370038462658144,100.0,19.23634434030923
++10% Demand Stress,1.1,715.0,3,1,2,0,96.00000000000003,100.0,65.00000000000001

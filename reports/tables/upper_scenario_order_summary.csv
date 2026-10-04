@@ -1,0 +1,7 @@
+scenario,order_id,customer,priority,base_quantity,scenario_quantity,requested_due_month,feasible_commit_month,remaining_unscheduled,slack_after_commit_pct,status
+Upper Planning Reference,O001,Customer_A,High,120.0,123.55132510898017,2026-09-01,2026-09-01,0.0,0.411660356623904,On Time
+Upper Planning Reference,O002,Customer_B,Normal,60.0,61.77566255449008,2026-09-01,2026-09-01,0.0,0.11749053493585596,On Time
+Upper Planning Reference,O003,Customer_C,High,130.0,133.84726886806186,2026-10-01,2026-10-01,0.0,0.4801225879450852,On Time
+Upper Planning Reference,O004,Customer_D,Normal,100.0,102.9594375908168,2026-10-01,2026-11-01,0.0,0.9907230690332656,Late
+Upper Planning Reference,O005,Customer_E,High,150.0,154.4391563862252,2026-11-01,2026-11-01,0.0,0.3192484760496778,On Time
+Upper Planning Reference,O006,Customer_F,Normal,90.0,92.66349383173512,2026-11-01,2026-12-01,0.0,0.9125620711804125,Late
