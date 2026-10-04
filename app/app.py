@@ -21,70 +21,222 @@ DATA_DIR = APP_DIR.parent / "data"
 PRIORITY_RANK = {"High": 0, "Normal": 1}
 AT_RISK_SLACK_THRESHOLD = 0.10
 
+# --------------------------------------------------
+# Visual style: soft glass cards / rounded dashboard
+# --------------------------------------------------
 st.markdown(
     """
 <style>
+:root {
+  --text: #153047;
+  --muted: #6b7f91;
+  --blue: #0ea5e9;
+  --green: #22c55e;
+  --yellow: #f59e0b;
+  --red: #ef4444;
+  --panel: rgba(255,255,255,.88);
+  --border: rgba(255,255,255,.95);
+  --shadow: rgba(71,110,143,.14);
+}
+
+.stApp {
+  background:
+    radial-gradient(circle at 8% 8%, rgba(255,218,121,.36), transparent 25%),
+    radial-gradient(circle at 92% 8%, rgba(125,211,252,.34), transparent 27%),
+    radial-gradient(circle at 48% 96%, rgba(134,239,172,.23), transparent 30%),
+    linear-gradient(135deg, #fffdf4 0%, #f4fbff 52%, #f8fff4 100%);
+}
+
 .block-container {
-    padding-top: 1.2rem;
-    padding-bottom: 3rem;
-    max-width: 1280px;
+  padding-top: 3.1rem !important;
+  padding-bottom: 4rem !important;
+  max-width: 1320px !important;
 }
-h1 {font-size: 2rem !important; margin-bottom: .1rem !important;}
-h2 {font-size: 1.35rem !important;}
-h3 {font-size: 1.05rem !important;}
 
-.hero {
-    border-radius: 18px;
-    padding: 1.2rem 1.35rem;
-    margin: .6rem 0 1rem 0;
-}
-.hero-green {background:#ecfdf5; border:1px solid #a7f3d0;}
-.hero-amber {background:#fffbeb; border:1px solid #fde68a;}
-.hero-red {background:#fef2f2; border:1px solid #fecaca;}
-.hero-title {font-size:1.35rem; font-weight:800; margin-bottom:.35rem;}
-.hero-text {font-size:1rem; line-height:1.65; color:#334155;}
+#MainMenu, footer, header {visibility: hidden;}
 
-.action-card {
-    border-radius: 14px;
-    padding: 1rem 1.15rem;
-    background:#eff6ff;
-    border:1px solid #bfdbfe;
-    margin-bottom: 1.2rem;
+.hero-title {
+  font-size: clamp(2rem, 4vw, 3.3rem);
+  font-weight: 900;
+  letter-spacing: -1.2px;
+  color: var(--text);
+  line-height: 1.08;
+  margin: 0 0 .6rem 0;
 }
-.action-title {font-weight:800; color:#1d4ed8; margin-bottom:.25rem;}
+
+.hero-subtitle {
+  color: var(--muted);
+  font-size: 1rem;
+  line-height: 1.65;
+  max-width: 900px;
+  margin-bottom: 1.3rem;
+}
+
+.glass {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  box-shadow: 0 16px 45px var(--shadow);
+  border-radius: 24px;
+  backdrop-filter: blur(14px);
+}
+
+.summary-card {
+  padding: 1.15rem 1.25rem;
+  min-height: 145px;
+}
+
+.summary-label {
+  color: var(--muted);
+  font-size: .86rem;
+  font-weight: 700;
+  margin-bottom: .35rem;
+}
+
+.summary-value {
+  font-size: 2rem;
+  line-height: 1.05;
+  font-weight: 900;
+  color: var(--text);
+}
+
+.summary-note {
+  color: var(--muted);
+  font-size: .86rem;
+  line-height: 1.45;
+  margin-top: .5rem;
+}
+
+.decision-card {
+  padding: 1.25rem 1.35rem;
+  margin: .4rem 0 1.2rem 0;
+}
+
+.decision-title {
+  font-size: 1.28rem;
+  font-weight: 900;
+  color: var(--text);
+  margin-bottom: .4rem;
+}
+
+.decision-body {
+  font-size: .98rem;
+  line-height: 1.7;
+  color: #3a5368;
+}
+
+.decision-safe {
+  background: linear-gradient(135deg, rgba(236,253,245,.95), rgba(255,255,255,.90));
+}
+
+.decision-watch {
+  background: linear-gradient(135deg, rgba(255,251,235,.97), rgba(255,255,255,.90));
+}
+
+.decision-risk {
+  background: linear-gradient(135deg, rgba(254,242,242,.97), rgba(255,255,255,.90));
+}
+
+.section-title {
+  font-size: 1.35rem;
+  font-weight: 900;
+  color: var(--text);
+  margin: 2rem 0 .25rem 0;
+}
+
+.section-sub {
+  color: var(--muted);
+  font-size: .92rem;
+  margin-bottom: .9rem;
+}
 
 .order-card {
-    border-radius: 14px;
-    padding: 1rem 1.05rem;
-    border:1px solid #e2e8f0;
-    background:white;
-    min-height:170px;
+  padding: 1rem 1.05rem;
+  min-height: 170px;
 }
-.order-red {border-left:6px solid #ef4444;}
-.order-amber {border-left:6px solid #f59e0b;}
-.order-green {border-left:6px solid #22c55e;}
-.order-title {font-size:1.05rem; font-weight:800; margin-bottom:.35rem;}
-.order-meta {font-size:.9rem; color:#64748b; margin-bottom:.4rem;}
-.order-body {font-size:.95rem; line-height:1.55; color:#334155;}
 
-.month-card {
-    border-radius: 14px;
-    padding: .9rem 1rem;
-    border:1px solid #e2e8f0;
-    background:#fff;
+.order-id {
+  font-size: 1rem;
+  font-weight: 900;
+  color: var(--text);
 }
-.month-name {font-weight:800; font-size:1rem;}
-.month-value {font-weight:800; font-size:1.4rem; margin:.25rem 0;}
-.small-note {color:#64748b; font-size:.86rem;}
+
+.order-state {
+  display: inline-block;
+  margin: .5rem 0 .6rem;
+  padding: .28rem .7rem;
+  border-radius: 999px;
+  font-size: .82rem;
+  font-weight: 900;
+}
+
+.state-green {background:#dcfce7; color:#166534;}
+.state-yellow {background:#fef3c7; color:#92400e;}
+.state-red {background:#fee2e2; color:#991b1b;}
+
+.order-copy {
+  color:#486176;
+  font-size:.9rem;
+  line-height:1.55;
+}
+
+.order-action {
+  margin-top:.55rem;
+  color:#1e3a8a;
+  font-size:.88rem;
+  font-weight:700;
+}
 
 .scenario-card {
-    border-radius: 14px;
-    border:1px solid #e2e8f0;
-    padding:.9rem 1rem;
-    background:#f8fafc;
+  padding: 1rem 1.05rem;
+  min-height: 135px;
 }
-.scenario-title {font-weight:800;}
-.scenario-result {font-size:1.15rem; font-weight:800; margin:.35rem 0;}
+
+.scenario-name {
+  color:var(--muted);
+  font-size:.83rem;
+  font-weight:800;
+}
+
+.scenario-result {
+  font-size:1.22rem;
+  font-weight:900;
+  color:var(--text);
+  margin:.35rem 0;
+}
+
+.scenario-copy {
+  color:var(--muted);
+  font-size:.86rem;
+  line-height:1.45;
+}
+
+div[data-testid="stRadio"] > div {
+  gap: .65rem;
+}
+
+div[data-testid="stRadio"] label {
+  background: rgba(255,255,255,.88);
+  border: 1px solid rgba(203,213,225,.8);
+  border-radius: 999px;
+  padding: .38rem .75rem;
+  box-shadow: 0 5px 16px rgba(71,110,143,.08);
+}
+
+div[data-testid="stExpander"] {
+  background: rgba(255,255,255,.80);
+  border-radius: 16px;
+  border: 1px solid rgba(226,232,240,.9);
+}
+
+[data-testid="stDataFrame"] {
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+@media (max-width: 900px) {
+  .block-container {padding-left: 1rem !important; padding-right: 1rem !important;}
+  .hero-title {font-size: 2.2rem;}
+}
 </style>
 """,
     unsafe_allow_html=True,
@@ -93,6 +245,8 @@ h3 {font-size: 1.05rem !important;}
 
 def load_csv(name: str, date_columns=None) -> pd.DataFrame:
     path = DATA_DIR / name
+    if not path.exists():
+        raise FileNotFoundError(f"找不到資料檔：{path}")
     if date_columns:
         return pd.read_csv(path, parse_dates=date_columns)
     return pd.read_csv(path)
@@ -110,10 +264,17 @@ def load_data() -> Dict[str, pd.DataFrame]:
     }
 
 
-def fmt_month(v):
+def fmt_month(v) -> str:
     if pd.isna(v):
         return "-"
     return pd.Timestamp(v).strftime("%Y-%m")
+
+
+def fmt_num(v: float) -> str:
+    # Main dashboard intentionally shows the original planning numbers without "k".
+    if abs(v - round(v)) < 1e-9:
+        return f"{int(round(v)):,}"
+    return f"{v:,.2f}"
 
 
 def allocate_orders(
@@ -122,14 +283,14 @@ def allocate_orders(
     multiplier: float,
     scenario_name: str,
 ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
-    capacity_work = capacity.copy().sort_values("month").reset_index(drop=True)
+    cap = capacity.copy().sort_values("month").reset_index(drop=True)
     remaining = {
         r.month: float(r.net_new_order_capacity)
-        for r in capacity_work.itertuples()
+        for r in cap.itertuples()
     }
     net_lookup = {
         r.month: float(r.net_new_order_capacity)
-        for r in capacity_work.itertuples()
+        for r in cap.itertuples()
     }
 
     work = orders.copy()
@@ -138,28 +299,28 @@ def allocate_orders(
         ["requested_due_month", "priority_rank", "order_id"]
     ).reset_index(drop=True)
 
-    allocation_records = []
-    summary_records = []
+    alloc_records = []
+    order_records = []
     months = sorted(remaining.keys())
 
     for order in work.itertuples():
         qty = float(order.quantity * multiplier)
-        qty_left = qty
+        left = qty
         final_month = pd.NaT
         slack_after = np.nan
 
         for month in months:
-            if qty_left <= 1e-9:
+            if left <= 1e-9:
                 break
             available = remaining[month]
             if available <= 1e-9:
                 continue
 
-            allocated = min(qty_left, available)
-            remaining[month] -= allocated
-            qty_left -= allocated
+            used = min(left, available)
+            remaining[month] -= used
+            left -= used
 
-            allocation_records.append(
+            alloc_records.append(
                 {
                     "scenario": scenario_name,
                     "order_id": order.order_id,
@@ -167,13 +328,14 @@ def allocate_orders(
                     "priority": order.priority,
                     "requested_due_month": order.requested_due_month,
                     "allocation_month": month,
-                    "allocated_quantity": allocated,
+                    "allocated_quantity": used,
                 }
             )
+
             final_month = month
             slack_after = remaining[month] / net_lookup[month]
 
-        if qty_left > 1e-9:
+        if left > 1e-9:
             status = "Unscheduled"
         elif final_month > order.requested_due_month:
             status = "Late"
@@ -185,11 +347,12 @@ def allocate_orders(
         else:
             status = "On Time"
 
-        summary_records.append(
+        order_records.append(
             {
                 "order_id": order.order_id,
                 "customer": order.customer,
                 "priority": order.priority,
+                "base_quantity": float(order.quantity),
                 "scenario_quantity": qty,
                 "requested_due_month": order.requested_due_month,
                 "feasible_commit_month": final_month,
@@ -198,10 +361,10 @@ def allocate_orders(
             }
         )
 
-    allocation = pd.DataFrame(allocation_records)
-    summary = pd.DataFrame(summary_records)
+    allocation = pd.DataFrame(alloc_records)
+    order_summary = pd.DataFrame(order_records)
 
-    monthly = (
+    monthly_alloc = (
         allocation.groupby("allocation_month", as_index=False)["allocated_quantity"]
         .sum()
         .rename(
@@ -212,7 +375,7 @@ def allocate_orders(
         )
     )
 
-    cap = capacity_work.merge(monthly, on="month", how="left")
+    cap = cap.merge(monthly_alloc, on="month", how="left")
     cap["allocated_new_orders"] = cap["allocated_new_orders"].fillna(0.0)
     cap["remaining_new_order_capacity"] = (
         cap["net_new_order_capacity"] - cap["allocated_new_orders"]
@@ -221,11 +384,13 @@ def allocate_orders(
         cap["allocated_new_orders"] / cap["net_new_order_capacity"] * 100
     )
 
-    return allocation, summary, cap
+    return allocation, order_summary, cap
 
 
-def get_late_qty(summary: pd.DataFrame, allocation: pd.DataFrame) -> float:
-    late_ids = set(summary.loc[summary["status"].eq("Late"), "order_id"])
+def late_quantity(order_summary: pd.DataFrame, allocation: pd.DataFrame) -> float:
+    late_ids = set(
+        order_summary.loc[order_summary["status"].eq("Late"), "order_id"]
+    )
     return float(
         allocation.loc[
             allocation["order_id"].isin(late_ids)
@@ -238,7 +403,7 @@ def get_late_qty(summary: pd.DataFrame, allocation: pd.DataFrame) -> float:
     )
 
 
-def get_order_late_qty(order_id: str, allocation: pd.DataFrame) -> float:
+def order_late_quantity(order_id: str, allocation: pd.DataFrame) -> float:
     return float(
         allocation.loc[
             allocation["order_id"].eq(order_id)
@@ -268,22 +433,27 @@ upper_multiplier = float(
     ).mean()
 )
 
-last_avg = float(forecast["last_value"].mean())
-holt_avg = float(forecast["holt_winters"].mean())
-holt_multiplier = holt_avg / last_avg
-holt_uplift = (holt_multiplier - 1) * 100
+# -----------------------------
+# Header
+# -----------------------------
+st.markdown(
+    """
+<div class="hero-title">生產排程決策看板</div>
+<div class="hero-subtitle">
+把需求變化直接轉成排程結果：哪些訂單能照原交期、哪些需要先處理，以及每個月的產能被什麼占用。
+</div>
+""",
+    unsafe_allow_html=True,
+)
 
 SCENARIOS = {
-    "① 目前需求": ("目前需求", 1.00),
-    "② 需求多約 3%": ("需求多約3%", upper_multiplier),
-    "③ 需求多 10%": ("需求多10%", 1.10),
+    "目前需求": ("Base", 1.00),
+    "需求多約 3%": ("Upper", upper_multiplier),
+    "需求多 10%": ("Stress", 1.10),
 }
 
-st.title("生產排程決策看板")
-st.caption("不用懂模型也能看：現在能不能照原交期走？哪張單要先處理？哪個月卡住？")
-
 scenario_label = st.radio(
-    "假設接下來需求是：",
+    "需求情境",
     list(SCENARIOS.keys()),
     horizontal=True,
 )
@@ -294,171 +464,257 @@ allocation, summary, cap = allocate_orders(
 )
 
 on_time = int((summary["status"] == "On Time").sum())
-risk = int((summary["status"] == "At Risk").sum())
+watch = int((summary["status"] == "At Risk").sum())
 late = int((summary["status"] == "Late").sum())
-late_qty = get_late_qty(summary, allocation)
+late_qty = late_quantity(summary, allocation)
+total_demand = float(summary["scenario_quantity"].sum())
 
-# 1. Business conclusion
-if scenario_name == "目前需求":
-    hero_class = "hero-amber"
-    hero_icon = "🟠"
-    hero_title = "現在排得完，但幾乎沒有安全空間"
-    hero_text = (
-        "6 張訂單目前都能完成，不會真正超過原交期；"
-        "但 O004、O006 已經貼近產能上限。只要需求再多一點、臨時插單或發生重工，就可能往後延。"
+# -----------------------------
+# Decision message
+# -----------------------------
+if scenario_name == "Base":
+    decision_class = "decision-watch"
+    decision_icon = "🟠"
+    decision_title = "目前排得完，但安全空間很小"
+    decision_body = (
+        "6 張訂單目前都能完成；其中 O004、O006 已經接近可用產能上限。"
+        "如果需求再增加、臨時插單或發生重工，這兩張會最先受到影響。"
     )
-    action = "先照目前交期規劃，但回覆 O004、O006 前，再確認產能與需求有沒有變動。"
+    next_step = (
+        "交期先照目前計畫，但 O004、O006 在正式回覆前，再確認需求與可用產能是否有變化。"
+    )
 
-elif scenario_name == "需求多約3%":
-    hero_class = "hero-red"
-    hero_icon = "🔴"
-    hero_title = "需求只多約 3%，就有 2 張訂單會延後"
-    hero_text = (
-        f"O004、O006 會有部分數量跨過原交期，合計約 {late_qty:.2f} k。"
-        "代表目前排程的緩衝非常小。"
+elif scenario_name == "Upper":
+    decision_class = "decision-risk"
+    decision_icon = "🔴"
+    decision_title = "需求只多約 3%，O004、O006 就開始延後"
+    decision_body = (
+        f"這兩張訂單有部分數量會跨過原交期，合計延後數量 {fmt_num(late_qty)}。"
+        "這表示目前排程的緩衝已經非常有限。"
     )
-    action = "優先處理 O004、O006：先看能不能挪產能或拆批交貨，再決定是否調整承諾交期。"
+    next_step = (
+        "先處理 O004、O006：確認能否挪產能或拆批交貨；若無法補足，再調整可承諾月份。"
+    )
 
 else:
-    hero_class = "hero-red"
-    hero_icon = "🚨"
-    hero_title = "需求多 10% 時，延後問題明顯放大"
-    hero_text = (
-        f"2 張訂單延後，真正跨過原交期的數量增加到 {late_qty:.2f} k。"
-        "這時不能只監控，需要提前協調產能與交期。"
+    decision_class = "decision-risk"
+    decision_icon = "🚨"
+    decision_title = "需求多 10% 時，延後量明顯放大"
+    decision_body = (
+        f"仍然是 O004、O006 受影響，但真正跨過原交期的數量增加到 {fmt_num(late_qty)}。"
+        "這時需要提前協調產能與交期。"
     )
-    action = "立即檢查 O004、O006 的產能來源；若補不到，就要拆批或重談交期。"
+    next_step = (
+        "優先確認 O004、O006 的產能來源；若補不到，改用拆批或重新確認交期。"
+    )
 
 st.markdown(
     f"""
-<div class="hero {hero_class}">
-  <div class="hero-title">{hero_icon} {hero_title}</div>
-  <div class="hero-text">{hero_text}</div>
+<div class="glass decision-card {decision_class}">
+  <div class="decision-title">{decision_icon} {decision_title}</div>
+  <div class="decision-body">{decision_body}</div>
+  <div class="decision-body" style="margin-top:.55rem;"><b>建議處理：</b>{next_step}</div>
 </div>
 """,
     unsafe_allow_html=True,
 )
 
-st.markdown(
-    f"""
-<div class="action-card">
-  <div class="action-title">下一步建議</div>
-  <div>{action}</div>
-</div>
-""",
-    unsafe_allow_html=True,
-)
+# -----------------------------
+# High-level numbers
+# -----------------------------
+c1, c2, c3, c4 = st.columns(4)
+cards = [
+    ("本情境需求量", fmt_num(total_demand), "依目前選擇的需求情境重新計算"),
+    ("可照原交期", str(on_time), "目前沒有跨過原交期"),
+    ("先注意", str(watch), "還沒延後，但剩餘空間很小"),
+    ("會延後", str(late), f"延後數量 {fmt_num(late_qty)}"),
+]
 
-# 2. Three numbers only
-m1, m2, m3 = st.columns(3)
-m1.metric("🟢 可以照原交期", on_time)
-m2.metric("🟠 先注意", risk)
-m3.metric("🔴 會延後", late)
-
-# 3. Only problematic orders
-st.subheader("先看需要處理的訂單")
-
-problem_orders = summary.loc[
-    summary["status"].isin(["At Risk", "Late", "Unscheduled"])
-].copy()
-
-if problem_orders.empty:
-    st.success("目前沒有需要特別處理的訂單。")
-else:
-    cols = st.columns(min(3, len(problem_orders)))
-    for i, row in enumerate(problem_orders.itertuples()):
-        if row.status == "Late":
-            css = "order-red"
-            badge = "🔴 會延後"
-            late_piece = get_order_late_qty(row.order_id, allocation)
-            reason = (
-                f"原交期 {fmt_month(row.requested_due_month)}，"
-                f"目前要到 {fmt_month(row.feasible_commit_month)} 才能全部排完。"
-            )
-            suggestion = (
-                f"約 {late_piece:.2f} k 會跨月。先看能不能挪產能或拆批。"
-            )
-        elif row.status == "At Risk":
-            css = "order-amber"
-            badge = "🟠 先注意"
-            slack = row.slack_after_commit_pct * 100
-            reason = (
-                f"目前仍能在 {fmt_month(row.requested_due_month)} 完成，"
-                f"但排完後只剩 {slack:.1f}% 空間。"
-            )
-            suggestion = "現在還沒延後，但很容易被臨時需求或異常推遲。"
-        else:
-            css = "order-red"
-            badge = "⚫ 排不進去"
-            reason = "目前規劃期間內沒有足夠產能排完。"
-            suggestion = "需要增加產能、拆單或重新談交期。"
-
-        with cols[i % len(cols)]:
-            st.markdown(
-                f"""
-<div class="order-card {css}">
-  <div class="order-title">{row.order_id}｜{row.customer}</div>
-  <div class="order-meta">{badge}</div>
-  <div class="order-body">{reason}<br><br><b>建議：</b>{suggestion}</div>
-</div>
-""",
-                unsafe_allow_html=True,
-            )
-
-# 4. Capacity as four simple cards
-st.subheader("哪個月份最容易卡住？")
-st.caption("只看一件事：這個月可以排的新訂單空間，已經用了多少。")
-
-month_cols = st.columns(len(cap))
-for col, row in zip(month_cols, cap.itertuples()):
-    util = float(row.util_pct)
-    remaining = float(row.remaining_new_order_capacity)
-
-    if util >= 99.9:
-        status = "🔴 已滿"
-        note = "再有新需求，就可能往下個月移。"
-    elif util >= 90:
-        status = "🟠 很緊"
-        note = "剩餘空間不多，需要注意。"
-    else:
-        status = "🟢 有空間"
-        note = "目前仍有明顯緩衝。"
-
+for col, (label, value, note) in zip([c1, c2, c3, c4], cards):
     with col:
         st.markdown(
             f"""
-<div class="month-card">
-  <div class="month-name">{fmt_month(row.month)}</div>
-  <div class="month-value">{util:.0f}% 已使用</div>
-  <div>{status}</div>
-  <div class="small-note">還剩 {remaining:.0f} k<br>{note}</div>
+<div class="glass summary-card">
+  <div class="summary-label">{label}</div>
+  <div class="summary-value">{value}</div>
+  <div class="summary-note">{note}</div>
 </div>
 """,
             unsafe_allow_html=True,
         )
 
-# 5. Scenario comparison in one glance
-st.subheader("需求如果增加，結果會差多少？")
+# -----------------------------
+# Orders that need attention
+# -----------------------------
+st.markdown('<div class="section-title">需要先處理的訂單</div>', unsafe_allow_html=True)
+st.markdown(
+    '<div class="section-sub">只把「先注意」或「已延後」的訂單拉出來，避免主管一開始被完整表格淹沒。</div>',
+    unsafe_allow_html=True,
+)
+
+problem = summary.loc[summary["status"].isin(["At Risk", "Late", "Unscheduled"])].copy()
+
+if problem.empty:
+    st.success("目前沒有需要特別處理的訂單。")
+else:
+    cols = st.columns(min(len(problem), 3))
+    for i, row in enumerate(problem.itertuples()):
+        if row.status == "At Risk":
+            state_cls = "state-yellow"
+            state_text = "🟠 先注意"
+            slack = row.slack_after_commit_pct * 100
+            copy = (
+                f"原交期 {fmt_month(row.requested_due_month)}，目前仍能按期完成。"
+                f"但排完後只剩 {slack:.1f}% 可用空間。"
+            )
+            action = "先確認需求或產能是否有變動。"
+        elif row.status == "Late":
+            state_cls = "state-red"
+            state_text = "🔴 已延後"
+            qty_late = order_late_quantity(row.order_id, allocation)
+            copy = (
+                f"原交期 {fmt_month(row.requested_due_month)}，目前要到 "
+                f"{fmt_month(row.feasible_commit_month)} 才能全部排完。"
+            )
+            action = f"有 {fmt_num(qty_late)} 跨月，先看能否挪產能或拆批。"
+        else:
+            state_cls = "state-red"
+            state_text = "⚫ 排不進去"
+            copy = "目前規劃期間內沒有足夠產能排完。"
+            action = "需要增加產能、拆單或重新確認交期。"
+
+        with cols[i % len(cols)]:
+            st.markdown(
+                f"""
+<div class="glass order-card">
+  <div class="order-id">{row.order_id}｜{row.customer}</div>
+  <div class="order-state {state_cls}">{state_text}</div>
+  <div class="order-copy">{copy}</div>
+  <div class="order-action">建議：{action}</div>
+</div>
+""",
+                unsafe_allow_html=True,
+            )
+
+# -----------------------------
+# Capacity composition chart
+# -----------------------------
+st.markdown('<div class="section-title">每個月的產能被什麼占用？</div>', unsafe_allow_html=True)
+st.markdown(
+    '<div class="section-sub">堆疊圖的整根柱子就是「總產能」；往上依序看原本已排工作、安全保留、本次新訂單，以及最後還剩多少。</div>',
+    unsafe_allow_html=True,
+)
+
+cap_chart = cap.copy()
+cap_chart["月份"] = cap_chart["month"].map(fmt_month)
+
+fig = go.Figure()
+fig.add_bar(
+    x=cap_chart["月份"],
+    y=cap_chart["existing_load"],
+    name="原本已排工作",
+    marker_color="#8ea6ba",
+    hovertemplate="原本已排工作：%{y:.0f}<extra></extra>",
+)
+fig.add_bar(
+    x=cap_chart["月份"],
+    y=cap_chart["safety_reserve"],
+    name="安全保留",
+    marker_color="#f6c453",
+    hovertemplate="安全保留：%{y:.0f}<extra></extra>",
+)
+fig.add_bar(
+    x=cap_chart["月份"],
+    y=cap_chart["allocated_new_orders"],
+    name="本次新訂單",
+    marker_color="#39a7e8",
+    hovertemplate="本次新訂單：%{y:.0f}<extra></extra>",
+)
+fig.add_bar(
+    x=cap_chart["月份"],
+    y=cap_chart["remaining_new_order_capacity"],
+    name="剩餘空間",
+    marker_color="#72d39b",
+    hovertemplate="剩餘空間：%{y:.0f}<extra></extra>",
+)
+
+fig.update_layout(
+    barmode="stack",
+    height=450,
+    xaxis=dict(type="category", title=""),
+    yaxis=dict(title="規劃數量", gridcolor="rgba(148,163,184,.18)"),
+    legend=dict(
+        orientation="h",
+        yanchor="bottom",
+        y=1.02,
+        xanchor="left",
+        x=0,
+        title="",
+    ),
+    margin=dict(l=20, r=20, t=65, b=20),
+    plot_bgcolor="rgba(255,255,255,.0)",
+    paper_bgcolor="rgba(255,255,255,.0)",
+)
+st.plotly_chart(fig, use_container_width=True)
+
+# Capacity interpretation row
+capacity_cols = st.columns(len(cap_chart))
+for col, row in zip(capacity_cols, cap_chart.itertuples()):
+    used = float(row.allocated_new_orders)
+    available = float(row.net_new_order_capacity)
+    remain = float(row.remaining_new_order_capacity)
+    util = float(row.util_pct)
+
+    if util >= 99.9:
+        state = "🔴 新訂單空間已滿"
+        desc = "需求再增加就會往後月移。"
+    elif util >= 90:
+        state = "🟠 空間很緊"
+        desc = "建議先確認後續需求。"
+    else:
+        state = "🟢 還有空間"
+        desc = "目前仍有明顯緩衝。"
+
+    with col:
+        st.markdown(
+            f"""
+<div class="glass scenario-card">
+  <div class="scenario-name">{row.月份}</div>
+  <div class="scenario-result">{fmt_num(used)} / {fmt_num(available)}</div>
+  <div class="scenario-copy">{state}<br>剩餘 {fmt_num(remain)}<br>{desc}</div>
+</div>
+""",
+            unsafe_allow_html=True,
+        )
+
+# -----------------------------
+# Scenario comparison
+# -----------------------------
+st.markdown('<div class="section-title">需求變多時，結果會怎麼變？</div>', unsafe_allow_html=True)
+st.markdown(
+    '<div class="section-sub">不需要理解模型，只看需求變動後有沒有開始影響交期。</div>',
+    unsafe_allow_html=True,
+)
 
 scenario_specs = [
     ("目前需求", 1.00),
-    ("多約 3%", upper_multiplier),
-    ("多 10%", 1.10),
+    ("需求多約 3%", upper_multiplier),
+    ("需求多 10%", 1.10),
 ]
 
-scenario_cols = st.columns(3)
-for col, (label, mult) in zip(scenario_cols, scenario_specs):
+scols = st.columns(3)
+for col, (label, mult) in zip(scols, scenario_specs):
     a, s, c = allocate_orders(orders, capacity, mult, label)
     r = int((s["status"] == "At Risk").sum())
     l = int((s["status"] == "Late").sum())
-    lq = get_late_qty(s, a)
+    lq = late_quantity(s, a)
 
     if l > 0:
         result = f"🔴 {l} 張延後"
-        detail = f"延後量 {lq:.2f} k"
+        detail = f"延後數量 {fmt_num(lq)}"
     elif r > 0:
-        result = f"🟠 {r} 張需注意"
-        detail = "目前沒有真正延後"
+        result = f"🟠 {r} 張先注意"
+        detail = "目前尚未真正延後"
     else:
         result = "🟢 全部穩定"
         detail = "沒有風險或延後"
@@ -466,18 +722,21 @@ for col, (label, mult) in zip(scenario_cols, scenario_specs):
     with col:
         st.markdown(
             f"""
-<div class="scenario-card">
-  <div class="scenario-title">{label}</div>
+<div class="glass scenario-card">
+  <div class="scenario-name">{label}</div>
   <div class="scenario-result">{result}</div>
-  <div class="small-note">{detail}</div>
+  <div class="scenario-copy">{detail}</div>
 </div>
 """,
             unsafe_allow_html=True,
         )
 
-# 6. Full order table only if wanted
-with st.expander("查看全部 6 張訂單"):
+# -----------------------------
+# Details: not interview-meta wording
+# -----------------------------
+with st.expander("查看全部訂單"):
     full = summary.copy()
+    full["數量"] = full["scenario_quantity"].map(fmt_num)
     full["原交期"] = full["requested_due_month"].map(fmt_month)
     full["目前完成"] = full["feasible_commit_month"].map(fmt_month)
     full["狀態"] = full["status"].map(
@@ -488,83 +747,83 @@ with st.expander("查看全部 6 張訂單"):
             "Unscheduled": "⚫ 排不進去",
         }
     )
-    full["數量"] = full["scenario_quantity"].round(2)
     full = full[
         ["order_id", "customer", "數量", "原交期", "目前完成", "狀態"]
-    ].rename(
-        columns={
-            "order_id": "訂單",
-            "customer": "客戶",
-        }
-    )
+    ].rename(columns={"order_id": "訂單", "customer": "客戶"})
     st.dataframe(full, use_container_width=True, hide_index=True)
 
-# 7. Forecast only for follow-up
-with st.expander("如果主管追問：為什麼還要看另一種 Forecast？"):
+with st.expander("需求預測依據"):
     st.markdown(
         """
-**先講白話：不是因為原本的預測不能用，而是因為它最近常常估得稍微偏低。**
+**為什麼不是只看一個預估值？**
 
-所以實際做交期判斷時，不只看一個數字，而是再拿一個「有趨勢感的預測」做交叉檢查。
+目前的基準預估在整體歷史測試中誤差最低，所以適合拿來當日常排程基準；
+但近期驗證又發現它大多數時候估得稍微偏低，因此再用另一個會反映趨勢的方法做交叉檢查，
+並另外保留「需求多約 3%」的較保守情境。
         """
     )
 
     c1, c2 = st.columns(2)
     with c1:
-        st.markdown("### 基準預測")
-        st.write("**Last Value**")
-        st.write("未來 3 個月：**5,769 → 5,769 → 5,769**")
-        st.write("整體歷史測試誤差最低，所以保留它當基準。")
+        st.markdown("**基準預估｜Last Value**")
+        st.write("歷史測試 WAPE：**1.851%**")
+        st.write("未來三個月：**5,769 → 5,769 → 5,769**")
+        st.caption("整體誤差最低，所以作為 Base Plan。")
 
     with c2:
-        st.markdown("### 第二個觀點")
-        st.write("**Holt-Winters**")
-        st.write("未來 3 個月：**5,771 → 5,796 → 5,804**")
-        st.write("它看到需求有緩慢往上的可能，所以拿來提醒風險。")
+        st.markdown("**趨勢參考｜Holt-Winters**")
+        st.write("歷史測試 WAPE：**1.991%**")
+        st.write("未來三個月：**5,771 → 5,796 → 5,804**")
+        st.caption("整體略差，但會反映緩慢上升的趨勢。")
+
+    st.write(
+        f"近期 18 次驗證中，有 **17 次低估**；Aggregate Bias 為 **-1.80%**。"
+    )
+    st.caption(
+        "這代表基準預估可以用，但正式做交期判斷時，不宜只看一個點，還要一起看較保守情境。"
+    )
 
     f = forecast.copy()
     f["月份"] = f["date"].map(fmt_month)
-
-    fig = go.Figure()
-    fig.add_scatter(
+    ffig = go.Figure()
+    ffig.add_scatter(
         x=f["月份"],
         y=f["last_value"],
         mode="lines+markers",
-        name="基準預測",
-        line=dict(color="#16a34a", width=3),
+        name="基準預估",
+        line=dict(color="#22c55e", width=3),
     )
-    fig.add_scatter(
+    ffig.add_scatter(
         x=f["月份"],
         y=f["holt_winters"],
         mode="lines+markers",
-        name="趨勢型參考",
+        name="趨勢參考",
         line=dict(color="#f59e0b", width=3),
     )
-    fig.update_layout(
-        height=320,
+    ffig.update_layout(
+        height=330,
         xaxis=dict(type="category", title=""),
-        yaxis_title="公開市場需求指標（USD mn）",
-        legend_title="",
-        margin=dict(l=10, r=10, t=20, b=10),
+        yaxis=dict(title="公開市場需求指標（USD mn）"),
+        legend=dict(orientation="h", y=1.02, x=0),
+        margin=dict(l=10, r=10, t=45, b=10),
+        plot_bgcolor="rgba(255,255,255,0)",
+        paper_bgcolor="rgba(255,255,255,0)",
     )
-    st.plotly_chart(fig, use_container_width=True)
-
-    st.info(
-        f"兩種方法的 3 個月平均只差約 {holt_uplift:.2f}%；"
-        "但因為目前排程本來就接近滿載，所以即使只多一點需求，也可能影響最後幾張訂單的交期。"
-    )
+    st.plotly_chart(ffig, use_container_width=True)
 
 with st.expander("名詞白話解釋"):
     st.markdown(
         """
-- **產能已滿**：這個月能拿來排新訂單的空間已經用完。
-- **先注意**：目前還沒延後，但只剩很少緩衝。
-- **延後**：至少有一部分數量會超過原本交期。
-- **拆批**：不要整張訂單一起等，先完成一部分、先交一部分。
-- **優先順序**：這個作品只用來決定「交期相同時誰先排」，不是說哪個真實客戶比較重要。
+- **原本已排工作**：這次新訂單進來之前，原本就已經占用的產能。
+- **安全保留**：刻意留下來應付急單、重工或設備異常的空間。
+- **本次新訂單**：目前情境下，這批新訂單實際排進各月份的數量。
+- **剩餘空間**：排完之後還能再接多少新需求。
+- **先注意**：目前還沒延後，但完成後的安全空間已經很少。
+- **延後**：至少有一部分數量會跨過原本交期。
+- **拆批**：先完成、先交一部分，不必整張訂單一起等。
         """
     )
 
 st.caption(
-    "展示資料說明：需求預測使用公開製造業資料；客戶、訂單與產能為模擬案例，用來展示生產規劃判斷方式。"
+    "展示資料說明：需求預測使用公開製造業資料；客戶、訂單與產能為模擬案例，用來展示生產規劃的判斷方式。"
 )
