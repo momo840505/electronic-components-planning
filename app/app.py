@@ -1,3 +1,4 @@
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -17,59 +18,34 @@ st.set_page_config(
 APP_DIR = Path(__file__).resolve().parent
 DATA_DIR = APP_DIR.parent / "data"
 
-STATUS_ORDER = ["On Time", "At Risk", "Late", "Unscheduled"]
 STATUS_ZH = {
     "On Time": "🟢 按期",
     "At Risk": "🟠 風險",
     "Late": "🔴 延後",
     "Unscheduled": "⚫ 未排入",
 }
-STATUS_COLOR = {
-    "On Time": "#16a34a",
-    "At Risk": "#f59e0b",
-    "Late": "#dc2626",
-    "Unscheduled": "#475569",
-}
-PRIORITY_ZH = {"High": "🔺 高", "Normal": "一般"}
+PRIORITY_ZH = {"High": "高", "Normal": "一般"}
 PRIORITY_RANK = {"High": 0, "Normal": 1}
 AT_RISK_SLACK_THRESHOLD = 0.10
 
 st.markdown(
     """
-<style>
-.main .block-container {padding-top: 1.3rem; padding-bottom: 3rem;}
-h1 {font-size: 2rem !important; letter-spacing: -0.02em;}
-h2 {font-size: 1.35rem !important;}
-h3 {font-size: 1.08rem !important;}
-[data-testid="stMetric"] {
-    background: #ffffff;
-    border: 1px solid #e2e8f0;
-    border-radius: 14px;
-    padding: 0.75rem 0.85rem;
-    min-height: 104px;
-}
-[data-testid="stMetricLabel"] {font-size: 0.82rem; color: #64748b;}
-[data-testid="stMetricValue"] {font-size: 1.45rem;}
-[data-testid="stMetricDelta"] {font-size: 0.76rem; white-space: normal;}
-.explain-box {
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
-    border-radius: 12px;
-    padding: 0.9rem 1rem;
-    margin: 0.35rem 0 0.9rem 0;
-}
-.micro {color:#64748b; font-size:0.84rem; line-height:1.55;}
-.badge-line {font-size: 0.92rem; margin: 0.1rem 0;}
-.stTabs [data-baseweb="tab-list"] {gap: 0.3rem;}
-.stTabs [data-baseweb="tab"] {padding-left: 0.8rem; padding-right: 0.8rem;}
-</style>
-""",
+    <style>
+    .block-container {padding-top: 1.3rem; padding-bottom: 3rem;}
+    [data-testid="stMetricLabel"] {font-size: 0.86rem;}
+    [data-testid="stMetricValue"] {font-size: 1.55rem;}
+    .stTabs [data-baseweb="tab-list"] {gap: 0.35rem;}
+    .stTabs [data-baseweb="tab"] {padding-left: 0.85rem; padding-right: 0.85rem;}
+    </style>
+    """,
     unsafe_allow_html=True,
 )
 
 
 def load_csv(name: str, date_columns: list[str] | None = None) -> pd.DataFrame:
     path = DATA_DIR / name
+    if not path.exists():
+        raise FileNotFoundError(f"找不到資料檔：{path}")
     if date_columns:
         return pd.read_csv(path, parse_dates=date_columns)
     return pd.read_csv(path)
@@ -85,21 +61,13 @@ def load_data() -> Dict[str, pd.DataFrame]:
         "capacity": load_csv("synthetic_capacity_plan.csv", ["month"]),
         "orders": load_csv("synthetic_order_book.csv", ["requested_due_month"]),
         "scenario_summary": load_csv("order_fulfillment_scenario_summary.csv"),
-        "scenario_capacity": load_csv("all_scenario_capacity.csv", ["month"]),
-        "scenario_orders": load_csv(
-            "all_scenario_order_summary.csv",
-            ["requested_due_month", "feasible_commit_month"],
-        ),
-        "scenario_allocation": load_csv(
-            "all_scenario_allocation.csv",
-            ["requested_due_month", "allocation_month"],
-        ),
-        "order_comparison": load_csv(
-            "order_scenario_comparison.csv",
-            ["commit_point", "commit_upper", "commit_stress", "requested_due_month"],
-        ),
-        "decision": load_csv("planner_decision_summary.csv"),
     }
+
+
+def format_month(value) -> str:
+    if pd.isna(value):
+        return "-"
+    return pd.Timestamp(value).strftime("%Y-%m")
 
 
 def allocate_orders(
@@ -108,13 +76,15 @@ def allocate_orders(
     quantity_multiplier: float,
     scenario_name: str,
 ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
-    """Reproduce the transparent allocation rules from Notebook 06."""
     capacity_work = capacity.copy().sort_values("month").reset_index(drop=True)
+
     capacity_remaining = {
-        row.month: float(row.net_new_order_capacity) for row in capacity_work.itertuples()
+        row.month: float(row.net_new_order_capacity)
+        for row in capacity_work.itertuples()
     }
     net_capacity_lookup = {
-        row.month: float(row.net_new_order_capacity) for row in capacity_work.itertuples()
+        row.month: float(row.net_new_order_capacity)
+        for row in capacity_work.itertuples()
     }
 
     order_work = orders.copy()
@@ -123,8 +93,8 @@ def allocate_orders(
         ["requested_due_month", "priority_rank", "order_id"]
     ).reset_index(drop=True)
 
-    allocation_records: list[dict] = []
-    order_summary_records: list[dict] = []
+    allocation_records = []
+    order_summary_records = []
     planning_months_sorted = sorted(capacity_remaining.keys())
 
     for order in order_work.itertuples():
@@ -136,6 +106,7 @@ def allocate_orders(
         for month in planning_months_sorted:
             if remaining_quantity <= 1e-9:
                 break
+
             available = capacity_remaining[month]
             if available <= 1e-9:
                 continue
@@ -155,6 +126,7 @@ def allocate_orders(
                     "allocated_quantity": allocated,
                 }
             )
+
             final_commit_month = month
             slack_after_commit_pct = (
                 capacity_remaining[month] / net_capacity_lookup[month]
@@ -216,7 +188,10 @@ def allocate_orders(
         * 100
     )
     capacity_result["operational_load_pct"] = (
-        (capacity_result["existing_load"] + capacity_result["allocated_new_orders"])
+        (
+            capacity_result["existing_load"]
+            + capacity_result["allocated_new_orders"]
+        )
         / capacity_result["total_capacity"]
         * 100
     )
@@ -232,9 +207,11 @@ def summarize_scenario(
     capacity_result: pd.DataFrame,
 ) -> dict:
     status_counts = order_summary["status"].value_counts()
+
     late_order_ids = set(
         order_summary.loc[order_summary["status"].eq("Late"), "order_id"]
     )
+
     late_quantity = float(
         allocation_detail.loc[
             (allocation_detail["order_id"].isin(late_order_ids))
@@ -245,12 +222,14 @@ def summarize_scenario(
             "allocated_quantity",
         ].sum()
     )
+
     december_spillover = float(
         allocation_detail.loc[
             allocation_detail["allocation_month"].eq(pd.Timestamp("2026-12-01")),
             "allocated_quantity",
         ].sum()
     )
+
     return {
         "scenario": scenario_name,
         "demand_multiplier": multiplier,
@@ -260,178 +239,141 @@ def summarize_scenario(
         "late_orders": int(status_counts.get("Late", 0)),
         "unscheduled_orders": int(status_counts.get("Unscheduled", 0)),
         "late_quantity": late_quantity,
-        "peak_new_order_utilization_pct": float(
-            capacity_result["new_order_capacity_utilization_pct"].max()
-        ),
         "december_spillover_quantity": december_spillover,
     }
 
 
-def format_month(value: pd.Series | pd.Timestamp) -> pd.Series | str:
-    if isinstance(value, pd.Series):
-        return pd.to_datetime(value).dt.strftime("%Y-%m")
-    if pd.isna(value):
-        return "—"
-    return pd.to_datetime(value).strftime("%Y-%m")
-
-
-def status_badge(status: str) -> str:
-    return STATUS_ZH.get(status, status)
-
-
-def priority_badge(priority: str) -> str:
-    return PRIORITY_ZH.get(priority, priority)
+def per_order_late_quantity(
+    order_id: str,
+    allocation_detail: pd.DataFrame,
+) -> float:
+    rows = allocation_detail.loc[
+        allocation_detail["order_id"].eq(order_id)
+        & (
+            allocation_detail["allocation_month"]
+            > allocation_detail["requested_due_month"]
+        )
+    ]
+    return float(rows["allocated_quantity"].sum())
 
 
 def status_style(value: str) -> str:
-    if "按期" in value:
+    if value == "🟢 按期":
         return "background-color:#dcfce7;color:#166534;font-weight:700"
-    if "風險" in value:
+    if value == "🟠 風險":
         return "background-color:#fef3c7;color:#92400e;font-weight:700"
-    if "延後" in value:
+    if value == "🔴 延後":
         return "background-color:#fee2e2;color:#991b1b;font-weight:700"
-    if "未排入" in value:
-        return "background-color:#e2e8f0;color:#334155;font-weight:700"
+    if value == "⚫ 未排入":
+        return "background-color:#e5e7eb;color:#111827;font-weight:700"
     return ""
 
 
-def preset_validation(
-    scenario_name: str,
-    live_summary: dict,
-    saved_summary: pd.DataFrame,
-) -> tuple[bool, str]:
-    row = saved_summary.loc[saved_summary["scenario"].eq(scenario_name)]
-    if row.empty:
-        return False, "找不到 06 Notebook 的對照情境。"
-    row = row.iloc[0]
-    numeric_checks = {
-        "total_demand": 1e-6,
-        "late_quantity": 1e-6,
-        "december_spillover_quantity": 1e-6,
-    }
-    integer_checks = ["on_time_orders", "at_risk_orders", "late_orders", "unscheduled_orders"]
-    for key, tol in numeric_checks.items():
-        if abs(float(live_summary[key]) - float(row[key])) > tol:
-            return False, f"{key} 與 06 Notebook 不一致。"
-    for key in integer_checks:
-        if int(live_summary[key]) != int(row[key]):
-            return False, f"{key} 與 06 Notebook 不一致。"
-    return True, "即時計算與 06 Notebook 固定輸出一致。"
-
-
-def filtered_late_quantity(allocation: pd.DataFrame, filtered_orders: pd.DataFrame) -> float:
-    late_ids = set(filtered_orders.loc[filtered_orders["status"].eq("Late"), "order_id"])
-    if not late_ids:
-        return 0.0
-    return float(
-        allocation.loc[
-            allocation["order_id"].isin(late_ids)
-            & (allocation["allocation_month"] > allocation["requested_due_month"]),
-            "allocated_quantity",
-        ].sum()
-    )
-
-
-def generate_decision_text(order_summary: pd.DataFrame, allocation: pd.DataFrame) -> tuple[str, str]:
-    late_ids = order_summary.loc[order_summary["status"].eq("Late"), "order_id"].tolist()
-    risk_ids = order_summary.loc[order_summary["status"].eq("At Risk"), "order_id"].tolist()
-    unscheduled_ids = order_summary.loc[
-        order_summary["status"].eq("Unscheduled"), "order_id"
-    ].tolist()
-
-    if unscheduled_ids:
-        return (
-            "error",
-            "目前甚至有訂單在規劃期間內排不完："
-            + "、".join(unscheduled_ids)
-            + "。模擬上應先確認能否增加或調度產能；若做不到，再討論拆批或重新承諾交期。",
-        )
-    if late_ids:
-        qty = filtered_late_quantity(allocation, order_summary)
-        return (
-            "error",
-            f"目前有 {len(late_ids)} 張訂單發生延後（{'、'.join(late_ids)}），真正跨過交期月的數量約 {qty:.2f} k。"
-            "優先動作是先看交期月以前還有沒有可調度產能；若沒有，再評估拆批出貨或調整可承諾月份。",
-        )
-    if risk_ids:
-        return (
-            "warning",
-            f"目前沒有延後訂單，但 {len(risk_ids)} 張訂單已是風險狀態（{'、'.join(risk_ids)}）。"
-            "意思是目前還排得完，但完成後剩下的產能空間不到 10%，再多一點需求就可能跨月。",
-        )
-    return (
-        "success",
-        "目前篩選範圍內沒有風險或延後訂單，代表這個情境下仍有足夠的排程空間。",
-    )
-
-
-def render_alert(level: str, text: str) -> None:
-    if level == "error":
-        st.error(text)
-    elif level == "warning":
-        st.warning(text)
-    else:
-        st.success(text)
-
-
 DATA = load_data()
-forecast = DATA["forecast"]
-planning_ref = DATA["planning_ref"]
-evaluation = DATA["evaluation"]
-model_summary = DATA["model_summary"]
-capacity_base = DATA["capacity"]
-orders = DATA["orders"]
-saved_scenario_summary = DATA["scenario_summary"]
+
+forecast = DATA["forecast"].copy()
+planning_ref = DATA["planning_ref"].copy()
+evaluation = DATA["evaluation"].copy()
+model_summary = DATA["model_summary"].copy()
+capacity_base = DATA["capacity"].copy()
+orders = DATA["orders"].copy()
 
 eval_lookup = dict(zip(evaluation["metric"], evaluation["value"].astype(str)))
+
 upper_multiplier = float(
-    (planning_ref["upper_planning_reference"] / planning_ref["selected_forecast"]).mean()
+    (
+        planning_ref["upper_planning_reference"]
+        / planning_ref["selected_forecast"]
+    ).mean()
 )
 
-PRESET_SCENARIOS = {
-    "基準：Point Forecast": ("Point Forecast", 1.00, "基準"),
-    "上修：Upper Reference (+2.96%)": (
-        "Upper Planning Reference",
-        upper_multiplier,
-        "+2.96%",
-    ),
-    "壓力測試：+10%": ("+10% Demand Stress", 1.10, "+10%"),
-}
+last_value_avg = float(forecast["last_value"].mean())
+holt_winters_avg = float(forecast["holt_winters"].mean())
+holt_winters_multiplier = holt_winters_avg / last_value_avg
+holt_winters_uplift_pct = (holt_winters_multiplier - 1) * 100
 
-st.title("Planner 決策 Dashboard")
-st.caption(
-    "把 Forecast 轉成『能不能按期交、哪張單有風險、哪個月產能太滿』。公開資料用於需求/預測；產能與訂單為 Synthetic 模擬。"
-)
-
+# -----------------------------
+# Sidebar
+# -----------------------------
 with st.sidebar:
-    st.header("🎛️ 情境與篩選")
-    scenario_mode = st.radio(
-        "1｜需求情境",
-        list(PRESET_SCENARIOS.keys()) + ["自訂 What-if"],
-        help="前三個情境會重現 06 Notebook；自訂情境是即時計算，不是 Notebook 固定輸出。",
+    st.header("情境控制")
+
+    scenario_choice = st.radio(
+        "需求情境",
+        [
+            "基準：Last Value",
+            f"Holt-Winters 趨勢參考（+{holt_winters_uplift_pct:.2f}%）",
+            "上修：Historical Error +2.96%",
+            "壓力測試：+10%",
+            "自訂 What-if",
+        ],
     )
 
-    if scenario_mode == "自訂 What-if":
-        custom_change_pct = st.slider(
-            "自訂需求變化 (%)",
+    if scenario_choice == "基準：Last Value":
+        scenario_name = "Point Forecast"
+        multiplier = 1.00
+        scenario_short = "基準"
+        scenario_source = "06 Notebook 固定情境"
+
+    elif scenario_choice.startswith("Holt-Winters"):
+        scenario_name = "Holt-Winters Trend Reference"
+        multiplier = holt_winters_multiplier
+        scenario_short = f"+{holt_winters_uplift_pct:.2f}%"
+        scenario_source = "Dashboard 延伸情境：用兩個 Forecast 的相對比例做敏感度測試"
+
+    elif scenario_choice == "上修：Historical Error +2.96%":
+        scenario_name = "Upper Planning Reference"
+        multiplier = upper_multiplier
+        scenario_short = f"+{(upper_multiplier - 1) * 100:.2f}%"
+        scenario_source = "05 / 06 Notebook 固定情境"
+
+    elif scenario_choice == "壓力測試：+10%":
+        scenario_name = "+10% Demand Stress"
+        multiplier = 1.10
+        scenario_short = "+10%"
+        scenario_source = "06 Notebook 固定情境"
+
+    else:
+        custom_pct = st.slider(
+            "需求調整",
             min_value=-5.0,
             max_value=15.0,
             value=5.0,
             step=0.5,
-            help="只改需求量，不改原本的 Synthetic Capacity。",
+            format="%.1f%%",
         )
-        scenario_name = f"Custom {custom_change_pct:+.1f}%"
-        multiplier = 1 + custom_change_pct / 100
-        scenario_short = f"{custom_change_pct:+.1f}%"
-        preset_mode = False
-    else:
-        scenario_name, multiplier, scenario_short = PRESET_SCENARIOS[scenario_mode]
-        preset_mode = True
+        scenario_name = "Custom What-if"
+        multiplier = 1 + custom_pct / 100
+        scenario_short = f"{custom_pct:+.1f}%"
+        scenario_source = "Dashboard 自訂模擬，不是 Notebook 固定結果"
 
-    st.markdown("---")
-    st.markdown("**2｜顯示範圍**")
-    st.caption("這些篩選只改『畫面要看哪些訂單』，不會偷偷重排整體產能。")
+    st.caption(scenario_source)
 
+    st.divider()
+    st.markdown("### Forecast 快速判讀")
+    st.caption(
+        "WAPE：把所有預測差距加總後，相對於實際需求總量的誤差；越低越好。"
+    )
+    st.write(
+        f"**Last Value：{eval_lookup.get('Pooled Backtest WAPE', 'N/A')}**  "
+        "→ 四種方法中最低，所以拿來當 Base Forecast。"
+    )
+    st.write(
+        f"**Bias：{eval_lookup.get('Aggregate Bias', 'N/A')}**  "
+        "→ 負值代表近期整體偏低估。"
+    )
+    st.write(
+        f"**低估：{eval_lookup.get('Under-Forecast Count', 'N/A')} / 18**  "
+        "→ 18 次驗證中，大多數 Prediction 都低於 Actual。"
+    )
+    st.write(
+        "**Holt-Winters：WAPE 1.991%**  "
+        "→ 整體略差，但會把趨勢與季節性帶進預測，所以當第二個觀點。"
+    )
+
+# -----------------------------
+# Main calculation
+# -----------------------------
 allocation, order_summary, capacity_result = allocate_orders(
     orders=orders,
     capacity=capacity_base,
@@ -439,374 +381,342 @@ allocation, order_summary, capacity_result = allocate_orders(
     scenario_name=scenario_name,
 )
 summary = summarize_scenario(
-    scenario_name, multiplier, order_summary, allocation, capacity_result
+    scenario_name,
+    multiplier,
+    order_summary,
+    allocation,
+    capacity_result,
 )
 
-# Sidebar display filters depend on the recalculated order status.
-with st.sidebar:
-    status_options = [s for s in STATUS_ORDER if s in set(order_summary["status"])]
-    selected_statuses = st.multiselect(
+st.title("Planner 決策 Dashboard")
+st.caption(
+    "重點不是看模型有多複雜，而是看需求變動後：哪張訂單會先出現風險、哪個月產能卡住、交期該不該直接承諾。"
+)
+
+# -----------------------------
+# KPI
+# -----------------------------
+c1, c2, c3, c4, c5 = st.columns(5)
+c1.metric("情境", scenario_short)
+c2.metric("總需求", f"{summary['total_demand']:.2f} k")
+c3.metric("風險單", summary["at_risk_orders"])
+c4.metric("延後單", summary["late_orders"])
+c5.metric("延後量", f"{summary['late_quantity']:.2f} k")
+
+if summary["late_orders"] > 0:
+    st.error(
+        f"目前有 {summary['late_orders']} 張訂單至少有部分數量跨過原交期月，"
+        f"真正延後的數量合計 {summary['late_quantity']:.2f} k。"
+    )
+elif summary["at_risk_orders"] > 0:
+    st.warning(
+        f"目前沒有延後單，但有 {summary['at_risk_orders']} 張風險單。"
+        "意思是仍能在交期月完成，但完成後剩餘產能低於 10%，很容易被需求上修或異常吃掉。"
+    )
+else:
+    st.success("目前沒有延後或風險訂單，產能仍有足夠緩衝。")
+
+# -----------------------------
+# Filters
+# -----------------------------
+st.subheader("先篩出要看的訂單")
+
+f1, f2, f3 = st.columns(3)
+
+status_options = list(STATUS_ZH.keys())
+with f1:
+    selected_status = st.multiselect(
         "狀態",
         status_options,
         default=status_options,
         format_func=lambda x: STATUS_ZH[x],
     )
-    selected_priorities = st.multiselect(
+
+priority_options = ["High", "Normal"]
+with f2:
+    selected_priority = st.multiselect(
         "優先級",
-        ["High", "Normal"],
-        default=["High", "Normal"],
+        priority_options,
+        default=priority_options,
         format_func=lambda x: PRIORITY_ZH[x],
-    )
-    due_month_values = sorted(order_summary["requested_due_month"].dropna().unique())
-    selected_due_months = st.multiselect(
-        "需求交期月",
-        due_month_values,
-        default=due_month_values,
-        format_func=lambda x: pd.to_datetime(x).strftime("%Y-%m"),
-    )
-    selected_orders = st.multiselect(
-        "訂單",
-        order_summary["order_id"].tolist(),
-        default=order_summary["order_id"].tolist(),
+        help="這裡的『高』只代表同一交期月中先排，不代表真實客戶比較重要。",
     )
 
-    st.markdown("---")
-    st.markdown("**Forecast 證據**")
-    st.write(f"模型：**Last Value（沿用最新值）**")
-    st.write(f"WAPE：**{eval_lookup.get('Pooled Backtest WAPE', 'N/A')}**")
-    st.write(f"Bias：**{eval_lookup.get('Aggregate Bias', 'N/A')}**")
-    st.write(f"低估：**{eval_lookup.get('Under-Forecast Count', 'N/A')} / 18 次**")
+due_month_options = sorted(order_summary["requested_due_month"].dropna().unique())
+with f3:
+    selected_due = st.multiselect(
+        "需求交期月",
+        due_month_options,
+        default=due_month_options,
+        format_func=lambda x: format_month(x),
+    )
 
 filtered_orders = order_summary.loc[
-    order_summary["status"].isin(selected_statuses)
-    & order_summary["priority"].isin(selected_priorities)
-    & order_summary["requested_due_month"].isin(selected_due_months)
-    & order_summary["order_id"].isin(selected_orders)
+    order_summary["status"].isin(selected_status)
+    & order_summary["priority"].isin(selected_priority)
+    & order_summary["requested_due_month"].isin(selected_due)
 ].copy()
-filtered_ids = set(filtered_orders["order_id"])
-filtered_allocation = allocation.loc[allocation["order_id"].isin(filtered_ids)].copy()
 
-# Global scenario KPIs — these change when the scenario changes.
-st.subheader("目前情境｜整體結果")
-k1, k2, k3, k4, k5, k6 = st.columns(6)
-with k1:
-    st.metric("需求變化", scenario_short)
-    st.caption("相對基準需求")
-with k2:
-    st.metric("總需求", f"{summary['total_demand']:.2f} k")
-    st.caption("Synthetic planning units")
-with k3:
-    st.metric("🟢 按期", summary["on_time_orders"])
-    st.caption("在交期月前／當月完成")
-with k4:
-    st.metric("🟠 風險", summary["at_risk_orders"])
-    st.caption("按期但餘裕 < 10%")
-with k5:
-    st.metric("🔴 延後", summary["late_orders"])
-    st.caption(f"Late 量 {summary['late_quantity']:.2f} k")
-with k6:
-    st.metric("12月承接", f"{summary['december_spillover_quantity']:.2f} k")
-    st.caption("前面月份排不下而往後移")
-
-if preset_mode:
-    is_match, match_message = preset_validation(
-        scenario_name, summary, saved_scenario_summary
-    )
-    if is_match:
-        st.success(f"✅ 數據檢核：{match_message}")
-    else:
-        st.error(f"⚠️ 數據檢核失敗：{match_message}")
-else:
-    st.info("🧪 自訂 What-if：這是即時計算情境，不是 06 Notebook 的固定輸出。")
-
-level, overall_text = generate_decision_text(order_summary, allocation)
-render_alert(level, overall_text)
-
-with st.expander("看不懂『既有負載、優先級、風險、Late』？先看這裡", expanded=False):
-    st.markdown(
-        """
-**既有負載**：這個月原本就已經排好的工作量。它不是這次新訂單，所以會先占掉總產能。  
-**安全保留**：刻意不拿來接一般新單的緩衝，用來模擬停機、重工、急單等不確定性。  
-**新訂單可用產能**：`總產能 - 既有負載 - 安全保留`，這才是能拿來排這批新訂單的空間。  
-**高優先級**：這裡只是 Synthetic 排程規則；**同一個交期月**時，高優先級先吃產能。它不代表真實客戶比較重要。  
-**按期**：最後一部分在交期月以前或當月完成，而且完成後仍有至少 10% 產能餘裕。  
-**風險**：目前還能按期，但完成後剩餘的新訂單產能不到 10%，再多一點需求就容易跨月。  
-**延後**：至少有一部分數量排到需求交期月之後。不是整張訂單全部延誤。  
-**承諾後餘裕**：這張訂單完成所在月份，還剩多少比例的新訂單可用產能。
-        """
-    )
-
-# Tabs
-overview_tab, risk_tab, capacity_tab, forecast_tab, glossary_tab = st.tabs(
-    ["📊 決策總覽", "📦 訂單風險", "🏭 產能", "📈 Forecast", "📘 名詞與規則"]
+fc1, fc2, fc3 = st.columns(3)
+fc1.metric("篩選後訂單數", len(filtered_orders))
+fc2.metric("篩選後需求量", f"{filtered_orders['scenario_quantity'].sum():.2f} k")
+fc3.metric(
+    "其中風險＋延後",
+    int(filtered_orders["status"].isin(["At Risk", "Late"]).sum()),
 )
 
-with overview_tab:
-    left, right = st.columns([1, 1.25])
+# -----------------------------
+# Tabs
+# -----------------------------
+tab1, tab2, tab3, tab4 = st.tabs(
+    [
+        "訂單決策",
+        "為什麼有風險",
+        "產能怎麼被吃掉",
+        "Forecast 怎麼判讀",
+    ]
+)
 
-    with left:
-        st.markdown("### 訂單狀態分布")
-        status_counts = order_summary["status"].value_counts().reindex(STATUS_ORDER, fill_value=0)
-        nonzero_status = status_counts[status_counts > 0]
-        fig_status = go.Figure(
-            data=[
-                go.Pie(
-                    labels=[STATUS_ZH[s] for s in nonzero_status.index],
-                    values=nonzero_status.values,
-                    hole=0.58,
-                    marker=dict(colors=[STATUS_COLOR[s] for s in nonzero_status.index]),
-                    textinfo="label+value",
-                    hovertemplate="%{label}<br>訂單數：%{value}<extra></extra>",
-                )
-            ]
-        )
-        fig_status.update_layout(height=330, margin=dict(l=10, r=10, t=20, b=10), showlegend=False)
-        st.plotly_chart(fig_status, use_container_width=True)
+with tab1:
+    st.subheader("目前情境的訂單結果")
 
-    with right:
-        st.markdown("### 三個 Notebook 情境比較")
-        compare_df = saved_scenario_summary.copy()
-        compare_df["情境"] = compare_df["scenario"].replace(
-            {
-                "Point Forecast": "基準",
-                "Upper Planning Reference": "上修 +2.96%",
-                "+10% Demand Stress": "+10% 壓力測試",
-            }
-        )
-        if not preset_mode:
-            custom_row = pd.DataFrame([summary])
-            custom_row["情境"] = f"自訂 {scenario_short}"
-            compare_df = pd.concat([compare_df, custom_row], ignore_index=True)
+    display_orders = filtered_orders.copy()
+    display_orders["優先級"] = display_orders["priority"].map(PRIORITY_ZH)
+    display_orders["狀態"] = display_orders["status"].map(STATUS_ZH)
+    display_orders["需求交期"] = display_orders["requested_due_month"].map(format_month)
+    display_orders["可承諾月份"] = display_orders["feasible_commit_month"].map(format_month)
+    display_orders["承諾後餘裕(%)"] = (
+        display_orders["slack_after_commit_pct"] * 100
+    ).round(1)
+    display_orders["情境需求量"] = display_orders["scenario_quantity"].round(2)
 
-        fig_compare = go.Figure()
-        fig_compare.add_bar(
-            x=compare_df["情境"],
-            y=compare_df["late_quantity"],
-            name="Late 數量",
-            marker_color=["#dc2626" if (not preset_mode and x == f"自訂 {scenario_short}") else "#fca5a5" for x in compare_df["情境"]],
-            text=[f"{x:.2f} k" for x in compare_df["late_quantity"]],
-            textposition="outside",
-        )
-        fig_compare.add_scatter(
-            x=compare_df["情境"],
-            y=compare_df["late_orders"],
-            name="Late 訂單數",
-            yaxis="y2",
-            mode="lines+markers+text",
-            text=compare_df["late_orders"].astype(int).astype(str),
-            textposition="top center",
-            line=dict(color="#7c3aed", width=3),
-        )
-        fig_compare.update_layout(
-            height=330,
-            margin=dict(l=20, r=20, t=20, b=20),
-            yaxis=dict(title="Late 數量 (k)"),
-            yaxis2=dict(title="Late 訂單數", overlaying="y", side="right", rangemode="tozero"),
-            legend=dict(orientation="h", y=1.12),
-        )
-        st.plotly_chart(fig_compare, use_container_width=True)
-
-    st.markdown("### 目前最需要注意什麼？")
-    late_rows = order_summary.loc[order_summary["status"].eq("Late")]
-    risk_rows = order_summary.loc[order_summary["status"].eq("At Risk")]
-    if not late_rows.empty:
-        st.error(
-            "目前最先要處理的是："
-            + "、".join(late_rows["order_id"].tolist())
-            + "。因為它們最後一部分已經排到需求交期月之後。"
-        )
-    elif not risk_rows.empty:
-        st.warning(
-            "目前還沒有 Late，但 "
-            + "、".join(risk_rows["order_id"].tolist())
-            + " 已經進入風險區；代表可以按期，但幾乎沒有緩衝。"
-        )
-    else:
-        st.success("目前所有訂單都有較足夠的排程空間。")
-
-    st.markdown("### 目前篩選範圍")
-    if filtered_orders.empty:
-        st.info("目前篩選條件沒有符合的訂單。請調整左側篩選。")
-    else:
-        f1, f2, f3, f4 = st.columns(4)
-        f1.metric("顯示訂單", len(filtered_orders))
-        f2.metric("篩選需求量", f"{filtered_orders['scenario_quantity'].sum():.2f} k")
-        f3.metric("風險 + 延後", int(filtered_orders["status"].isin(["At Risk", "Late", "Unscheduled"]).sum()))
-        f4.metric("篩選 Late 量", f"{filtered_late_quantity(filtered_allocation, filtered_orders):.2f} k")
-
-with risk_tab:
-    st.markdown("### 訂單風險表")
-    st.caption("左側『狀態 / 優先級 / 交期月 / 訂單』篩選會直接改變這張表與下方的訂單解讀。")
-
-    if filtered_orders.empty:
-        st.info("目前沒有符合篩選條件的訂單。")
-    else:
-        display_orders = filtered_orders.copy()
-        display_orders["priority"] = display_orders["priority"].map(priority_badge)
-        display_orders["status"] = display_orders["status"].map(status_badge)
-        display_orders["requested_due_month"] = format_month(display_orders["requested_due_month"])
-        display_orders["feasible_commit_month"] = format_month(display_orders["feasible_commit_month"])
-        display_orders["slack_after_commit_pct"] = display_orders["slack_after_commit_pct"] * 100
-        display_orders = display_orders[
-            [
-                "order_id",
-                "customer",
-                "priority",
-                "scenario_quantity",
-                "requested_due_month",
-                "feasible_commit_month",
-                "slack_after_commit_pct",
-                "status",
-            ]
-        ].rename(
-            columns={
-                "order_id": "訂單",
-                "customer": "客戶",
-                "priority": "優先級",
-                "scenario_quantity": "情境數量",
-                "requested_due_month": "需求交期月",
-                "feasible_commit_month": "可承諾月份",
-                "slack_after_commit_pct": "承諾後餘裕(%)",
-                "status": "狀態",
-            }
-        )
-        styled = display_orders.style.map(status_style, subset=["狀態"]).format(
-            {"情境數量": "{:.2f}", "承諾後餘裕(%)": "{:.1f}"}
-        )
-        st.dataframe(styled, use_container_width=True, hide_index=True)
-
-        csv_bytes = display_orders.to_csv(index=False).encode("utf-8-sig")
-        st.download_button(
-            "下載目前篩選結果 CSV",
-            data=csv_bytes,
-            file_name="filtered_order_risk.csv",
-            mime="text/csv",
-        )
-
-        st.markdown("### 點一張訂單，看它為什麼是這個狀態")
-        focus_order_id = st.selectbox("聚焦訂單", filtered_orders["order_id"].tolist())
-        row = filtered_orders.loc[filtered_orders["order_id"].eq(focus_order_id)].iloc[0]
-        focus_alloc = allocation.loc[allocation["order_id"].eq(focus_order_id)].copy()
-
-        a, b, c, d = st.columns(4)
-        a.metric("需求交期月", format_month(row["requested_due_month"]))
-        b.metric("可承諾月份", format_month(row["feasible_commit_month"]))
-        c.metric("優先級", priority_badge(row["priority"]))
-        d.metric("承諾後餘裕", f"{row['slack_after_commit_pct']*100:.1f}%")
-
-        if row["status"] == "On Time":
-            st.success("🟢 按期：最後一部分在交期月以前或當月完成，而且完成後餘裕至少 10%。")
-        elif row["status"] == "At Risk":
-            st.warning("🟠 風險：目前仍能按期，但完成後的剩餘新訂單產能不到 10%。再多一點需求就容易跨月。")
-        elif row["status"] == "Late":
-            st.error("🔴 延後：至少有一部分數量排到需求交期月之後，所以整張訂單被標成 Late。")
-        else:
-            st.error("⚫ 未排入：規劃期間結束後仍有數量沒有可用產能可以安排。")
-
-        if row["priority"] == "High":
-            st.info("優先級為『高』只代表：在相同需求交期月的訂單中，這張會先排。這是 Synthetic 規則，不代表真實客戶等級。")
-        else:
-            st.info("優先級為『一般』代表：如果和高優先級訂單同一個交期月，高優先級會先排；較早交期的一般訂單仍會先於較晚交期的高優先級訂單。")
-
-        focus_alloc["月份"] = format_month(focus_alloc["allocation_month"])
-        focus_alloc = focus_alloc[["月份", "allocated_quantity"]].rename(columns={"allocated_quantity": "排入數量"})
-        fig_focus = go.Figure(
-            go.Bar(
-                x=focus_alloc["月份"],
-                y=focus_alloc["排入數量"],
-                marker_color=STATUS_COLOR[row["status"]],
-                text=[f"{v:.2f}" for v in focus_alloc["排入數量"]],
-                textposition="outside",
-            )
-        )
-        due_label = format_month(row["requested_due_month"])
-        marker_y = max(float(focus_alloc["排入數量"].max()) * 1.12, 1.0)
-        fig_focus.add_scatter(
-            x=[due_label],
-            y=[marker_y],
-            mode="markers+text",
-            marker=dict(symbol="triangle-down", size=13, color="#dc2626"),
-            text=["需求交期月"],
-            textposition="top center",
-            name="需求交期月",
-            hoverinfo="skip",
-        )
-        fig_focus.update_layout(
-            height=300,
-            yaxis_title="排入數量 (k)",
-            xaxis_title="實際排入月份",
-            margin=dict(l=20, r=20, t=25, b=20),
-        )
-        st.plotly_chart(fig_focus, use_container_width=True)
-
-with capacity_tab:
-    st.markdown("### 先把四個產能名詞看懂")
-    st.markdown(
-        """
-<div class="explain-box">
-<b>總產能</b>：這個月最多能做多少。<br>
-<b>既有負載</b>：原本就已經排進去的工作，會先占掉產能。<br>
-<b>安全保留</b>：刻意留著不接一般新單，當作停機、重工、急單等緩衝。<br>
-<b>新訂單可用產能</b>：總產能扣掉前兩項後，真正可以拿來排這批新訂單的空間。
-</div>
-        """,
-        unsafe_allow_html=True,
+    display_orders = display_orders[
+        [
+            "order_id",
+            "customer",
+            "優先級",
+            "情境需求量",
+            "需求交期",
+            "可承諾月份",
+            "承諾後餘裕(%)",
+            "狀態",
+        ]
+    ].rename(
+        columns={
+            "order_id": "訂單",
+            "customer": "客戶",
+        }
     )
 
-    month_labels = [format_month(x) for x in capacity_result["month"]]
-    selected_month_label = st.select_slider("選一個月份看產能拆解", options=month_labels, value=month_labels[0])
-    selected_month_row = capacity_result.loc[
-        format_month(capacity_result["month"]).eq(selected_month_label)
-    ].iloc[0]
+    styled_orders = display_orders.style.map(
+        status_style,
+        subset=["狀態"],
+    )
 
-    c1, c2, c3, c4 = st.columns(4)
-    with c1:
-        st.metric("總產能", f"{selected_month_row['total_capacity']:.0f} k")
-        st.caption("這個月最多可以做多少")
-    with c2:
-        st.metric("既有負載", f"{selected_month_row['existing_load']:.0f} k")
-        st.caption("先前已經排好的工作")
-    with c3:
-        st.metric("安全保留", f"{selected_month_row['safety_reserve']:.0f} k")
-        st.caption("刻意不拿來接一般新單")
-    with c4:
-        st.metric("新訂單可用", f"{selected_month_row['net_new_order_capacity']:.0f} k")
-        st.caption("總產能－既有負載－安全保留")
+    st.dataframe(
+        styled_orders,
+        use_container_width=True,
+        hide_index=True,
+    )
 
-    st.markdown("### 每月產能到底被誰用掉？")
+    st.caption(
+        "判讀順序：先看需求交期 → 再看可承諾月份 → 最後看狀態。"
+        "『風險』不是已經延後，而是雖然還排得進去，但幾乎沒有產能緩衝。"
+    )
+
+    st.subheader("四種情境放在一起看")
+
+    comparison_specs = [
+        ("基準", 1.00, "06 Notebook"),
+        ("Holt-Winters", holt_winters_multiplier, "Dashboard 延伸"),
+        ("Upper +2.96%", upper_multiplier, "05/06 Notebook"),
+        ("+10% Stress", 1.10, "06 Notebook"),
+    ]
+
+    comparison_rows = []
+    for label, mult, source in comparison_specs:
+        a, o, c = allocate_orders(
+            orders=orders,
+            capacity=capacity_base,
+            quantity_multiplier=mult,
+            scenario_name=label,
+        )
+        s = summarize_scenario(label, mult, o, a, c)
+        comparison_rows.append(
+            {
+                "情境": label,
+                "來源": source,
+                "需求變化(%)": (mult - 1) * 100,
+                "總需求": s["total_demand"],
+                "風險單": s["at_risk_orders"],
+                "延後單": s["late_orders"],
+                "延後量": s["late_quantity"],
+                "12月承接": s["december_spillover_quantity"],
+            }
+        )
+
+    compare_df = pd.DataFrame(comparison_rows)
+
+    fig_compare = go.Figure()
+    fig_compare.add_bar(
+        x=compare_df["情境"],
+        y=compare_df["延後量"],
+        name="延後量",
+        marker_color=["#94a3b8", "#f59e0b", "#ef4444", "#991b1b"],
+        text=[f"{v:.2f}" for v in compare_df["延後量"]],
+        textposition="outside",
+    )
+    fig_compare.update_layout(
+        height=360,
+        yaxis_title="延後量（k planning units）",
+        xaxis_title="",
+        showlegend=False,
+        margin=dict(l=10, r=10, t=25, b=10),
+    )
+    st.plotly_chart(fig_compare, use_container_width=True)
+
+    st.dataframe(
+        compare_df.round(
+            {
+                "需求變化(%)": 2,
+                "總需求": 2,
+                "延後量": 2,
+                "12月承接": 2,
+            }
+        ),
+        use_container_width=True,
+        hide_index=True,
+    )
+
+    st.info(
+        "Holt-Winters 不是 06 Notebook 原本的固定情境。這裡只把它相對 Last Value 的 "
+        f"3 個月平均 Forecast 差異（約 +{holt_winters_uplift_pct:.2f}%）轉成一個 Dashboard 敏感度測試。"
+    )
+
+with tab2:
+    st.subheader("點一張訂單，看它為什麼是這個狀態")
+
+    order_choices = filtered_orders["order_id"].tolist()
+    if not order_choices:
+        st.info("目前 Filter 沒有訂單，請放寬篩選條件。")
+    else:
+        selected_order_id = st.selectbox("選擇訂單", order_choices)
+        row = order_summary.loc[
+            order_summary["order_id"].eq(selected_order_id)
+        ].iloc[0]
+
+        late_qty = per_order_late_quantity(selected_order_id, allocation)
+
+        oc1, oc2, oc3, oc4 = st.columns(4)
+        oc1.metric("需求交期", format_month(row["requested_due_month"]))
+        oc2.metric("可承諾月份", format_month(row["feasible_commit_month"]))
+        oc3.metric("情境需求量", f"{row['scenario_quantity']:.2f} k")
+        oc4.metric(
+            "承諾後餘裕",
+            (
+                "-"
+                if pd.isna(row["slack_after_commit_pct"])
+                else f"{row['slack_after_commit_pct'] * 100:.1f}%"
+            ),
+        )
+
+        status = row["status"]
+        if status == "On Time":
+            st.success(
+                "🟢 按期：最後一部分數量可以在需求交期月以前或當月完成，"
+                "而且沒有觸發目前設定的風險條件。"
+            )
+        elif status == "At Risk":
+            st.warning(
+                "🟠 風險：目前還能在交期月完成，但完成這張單後，"
+                f"該月剩餘的新訂單產能只有 {row['slack_after_commit_pct'] * 100:.1f}%。"
+                "目前規則把低於 10% 視為風險，因為一點需求上修、重工或異常就可能把它推遲。"
+            )
+        elif status == "Late":
+            st.error(
+                f"🔴 延後：這張單有 {late_qty:.2f} k 排到需求交期月之後，"
+                f"所以最後可承諾月份變成 {format_month(row['feasible_commit_month'])}。"
+            )
+        else:
+            st.error("⚫ 未排入：目前規劃期間結束後，仍有數量找不到可用產能。")
+
+        if row["priority"] == "High":
+            st.info(
+                "優先級 = 高：只有在『同一個需求交期月』的訂單之間，這張單會先排。"
+                "這是 Synthetic Rule，不是在說真實客戶比較重要。"
+            )
+        else:
+            st.info(
+                "優先級 = 一般：如果同一個交期月同時有高優先級訂單，高優先級會先使用可用產能。"
+                "因此當產能開始吃緊時，一般優先級通常會比較早承受 Spillover。"
+            )
+
+        order_alloc = allocation.loc[
+            allocation["order_id"].eq(selected_order_id)
+        ].copy()
+        order_alloc["月份"] = order_alloc["allocation_month"].map(format_month)
+        order_alloc["排入數量"] = order_alloc["allocated_quantity"].round(2)
+
+        st.markdown("**這張訂單實際排到哪幾個月？**")
+        st.dataframe(
+            order_alloc[["月份", "排入數量"]],
+            use_container_width=True,
+            hide_index=True,
+        )
+
+with tab3:
+    st.subheader("產能到底是怎麼算的？")
+    st.markdown(
+        """
+**總產能**：這個月理論上可使用的全部產能。  
+**既有負載**：這次新訂單進來以前，原本就已經排好的工作，所以會先占掉產能。  
+**安全保留**：刻意不拿來接一般新單的緩衝，用來模擬停機、重工、急單等不確定性。  
+**新訂單可用產能** = 總產能 − 既有負載 − 安全保留。  
+**已排新訂單**：目前情境下真的塞進這個月的新單數量。  
+**剩餘空間**：新訂單可用產能扣掉已排新單後，還剩多少。
+        """
+    )
+
     cap = capacity_result.copy()
-    cap["月份"] = format_month(cap["month"])
-    cap["剩餘未用"] = cap["remaining_new_order_capacity"].clip(lower=0)
+    cap["月份"] = cap["month"].map(format_month)
+
     fig_cap = go.Figure()
-    fig_cap.add_bar(x=cap["月份"], y=cap["existing_load"], name="既有負載", marker_color="#64748b")
-    fig_cap.add_bar(x=cap["月份"], y=cap["safety_reserve"], name="安全保留", marker_color="#cbd5e1")
-    fig_cap.add_bar(x=cap["月份"], y=cap["allocated_new_orders"], name="這次排入的新訂單", marker_color="#0f766e")
-    fig_cap.add_bar(x=cap["月份"], y=cap["剩餘未用"], name="新訂單剩餘空間", marker_color="#bbf7d0")
+    fig_cap.add_bar(
+        x=cap["月份"],
+        y=cap["existing_load"],
+        name="既有負載",
+        marker_color="#94a3b8",
+    )
+    fig_cap.add_bar(
+        x=cap["月份"],
+        y=cap["allocated_new_orders"],
+        name="這次新訂單",
+        marker_color="#0ea5e9",
+    )
+    fig_cap.add_bar(
+        x=cap["月份"],
+        y=cap["safety_reserve"],
+        name="安全保留",
+        marker_color="#f59e0b",
+    )
+    fig_cap.add_bar(
+        x=cap["月份"],
+        y=cap["remaining_new_order_capacity"],
+        name="尚未使用的新訂單空間",
+        marker_color="#22c55e",
+    )
+
     fig_cap.update_layout(
         barmode="stack",
-        height=410,
+        height=430,
         yaxis_title="Synthetic k planning units",
-        xaxis_title="月份",
-        legend=dict(orientation="h", y=1.12),
-        margin=dict(l=20, r=20, t=25, b=20),
+        xaxis_title="",
+        legend_title="",
+        margin=dict(l=10, r=10, t=20, b=10),
     )
     st.plotly_chart(fig_cap, use_container_width=True)
 
-    st.markdown("### 白話判讀")
-    full_months = cap.loc[cap["remaining_new_order_capacity"] <= 1e-9, "月份"].tolist()
-    if full_months:
-        st.warning(
-            "新訂單可用產能已被用滿的月份："
-            + "、".join(full_months)
-            + "。這些月份再多一點需求，就必須往後月移。"
-        )
-    spill = summary["december_spillover_quantity"]
-    if spill > 0:
-        st.error(f"目前有 {spill:.2f} k 被推到 12 月，代表前面交期窗口已經放不下。")
-    else:
-        st.success("目前沒有數量被推到 12 月。")
-
-    cap_table = cap[
+    cap_display = cap[
         [
             "月份",
             "total_capacity",
@@ -815,7 +725,6 @@ with capacity_tab:
             "net_new_order_capacity",
             "allocated_new_orders",
             "remaining_new_order_capacity",
-            "new_order_capacity_utilization_pct",
         ]
     ].rename(
         columns={
@@ -824,99 +733,158 @@ with capacity_tab:
             "safety_reserve": "安全保留",
             "net_new_order_capacity": "新訂單可用",
             "allocated_new_orders": "已排新訂單",
-            "remaining_new_order_capacity": "剩餘新訂單空間",
-            "new_order_capacity_utilization_pct": "新訂單使用率(%)",
+            "remaining_new_order_capacity": "剩餘空間",
         }
     )
-    st.dataframe(cap_table, use_container_width=True, hide_index=True)
-
-with forecast_tab:
-    st.markdown("### Forecast 為什麼不能只看一個數字？")
-    f1, f2, f3, f4 = st.columns(4)
-    f1.metric("選定模型", "Last Value", "沿用最新訂單水準")
-    f2.metric("Backtest WAPE", eval_lookup.get("Pooled Backtest WAPE", "N/A"), "整體歷史驗證誤差")
-    f3.metric("Bias", eval_lookup.get("Aggregate Bias", "N/A"), "負值 = 整體偏低估")
-    f4.metric("低估次數", f"{eval_lookup.get('Under-Forecast Count', 'N/A')} / 18", "近期驗證中多數低估")
-
-    st.info(
-        "WAPE 1.851% 的意思是：近期 Rolling Backtest 的加權絕對誤差約 1.85%。它不是『準確率 98.149%』。"
-    )
-    st.warning(
-        "Bias = -1.80%，而且 18 次中有 17 次低估，所以 Point Forecast 雖然誤差小，仍要額外看上修需求情境。"
+    st.dataframe(
+        cap_display.round(2),
+        use_container_width=True,
+        hide_index=True,
     )
 
-    left, right = st.columns(2)
-    with left:
-        st.markdown("#### 模型比較：越複雜不一定越好")
-        model_df = model_summary.sort_values("wape_pct").copy()
-        colors = ["#0f766e" if m == "last_value" else "#94a3b8" for m in model_df["model"]]
-        fig_model = go.Figure(
-            go.Bar(
-                x=model_df["model"],
-                y=model_df["wape_pct"],
-                marker_color=colors,
-                text=[f"{x:.3f}%" for x in model_df["wape_pct"]],
-                textposition="outside",
-            )
+    full_months = cap.loc[
+        cap["remaining_new_order_capacity"].abs() < 1e-9,
+        "月份",
+    ].tolist()
+    if full_months:
+        st.warning(
+            "目前以下月份的新訂單可用產能已被吃滿："
+            + "、".join(full_months)
+            + "。需求再增加時，後面的訂單就會往下一個月 Spillover。"
         )
-        fig_model.update_layout(height=340, yaxis_title="WAPE (%)", xaxis_title="", margin=dict(l=20, r=20, t=20, b=20))
-        st.plotly_chart(fig_model, use_container_width=True)
 
-    with right:
-        st.markdown("#### 未來 3 個月：Point vs 上下參考")
-        ref = planning_ref.copy()
-        ref["月份"] = format_month(ref["date"])
-        fig_ref = go.Figure()
-        fig_ref.add_scatter(x=ref["月份"], y=ref["upper_planning_reference"], name="上方參考", mode="lines+markers", line=dict(color="#dc2626"))
-        fig_ref.add_scatter(x=ref["月份"], y=ref["selected_forecast"], name="Point Forecast", mode="lines+markers", line=dict(color="#0f766e", width=3))
-        fig_ref.add_scatter(x=ref["月份"], y=ref["lower_planning_reference"], name="下方參考", mode="lines+markers", line=dict(color="#64748b"))
-        fig_ref.update_layout(height=340, yaxis_title="Millions of USD", xaxis_title="", legend=dict(orientation="h", y=1.12), margin=dict(l=20, r=20, t=20, b=20))
-        st.plotly_chart(fig_ref, use_container_width=True)
+with tab4:
+    st.subheader("為什麼 Last Value 有低估問題，還是拿它當 Base？")
 
-    st.markdown("#### 這和 Planner 有什麼關係？")
     st.markdown(
         """
-- Point Forecast 可以拿來做基準計畫。  
-- 但模型近期有明顯低估傾向，所以交期承諾前還要看 Upper Scenario。  
-- Dashboard 的 `+2.96%` 就是把 05 的歷史誤差尺度轉成需求上修測試，而不是宣稱未來一定會增加 2.96%。
+**因為「有 Bias」不等於「另一個模型整體更準」。**
+
+Last Value 的缺點很清楚：近期需求往上時，它會反應得比較慢，所以 18 次驗證裡有 17 次低於 Actual。  
+但模型選擇仍要看完整 Backtest；在四種方法中，Last Value 的 **WAPE 1.851% 仍是最低**。
+
+因此比較合理的做法不是把 Last Value 丟掉，而是：
+
+**Last Value 當 Base Forecast + Holt-Winters 當趨勢第二觀點 + Upper Reference 當誤差緩衝。**
         """
     )
 
-with glossary_tab:
-    st.markdown("### 名詞白話表")
-    glossary = pd.DataFrame(
-        [
-            ["總產能", "某月份最多可以處理的 Synthetic 工作量。"],
-            ["既有負載", "這次新訂單進來前，原本就已經排好的工作。"],
-            ["安全保留", "刻意留下來的緩衝，不拿來接一般新單。"],
-            ["新訂單可用產能", "總產能扣掉既有負載與安全保留後，真正能排新單的空間。"],
-            ["高優先級", "同一個交期月時先排；只是模擬規則，不是真實客戶等級。"],
-            ["按期", "最後一部分不晚於交期月，而且完成後仍有至少 10% 產能餘裕。"],
-            ["風險", "還能按期，但完成後餘裕不到 10%。"],
-            ["延後", "至少一部分數量排到交期月之後。"],
-            ["Late Quantity", "真正被排到交期月之後的那部分數量。"],
-            ["12月承接 / Spillover", "9～11 月放不下，最後被排到 12 月的數量。"],
-            ["WAPE", "Forecast 整體誤差大小；越低越好。"],
-            ["Bias", "Forecast 整體偏高還偏低；負值代表整體偏低估。"],
-        ],
-        columns=["名詞", "白話解釋"],
-    )
-    st.dataframe(glossary, use_container_width=True, hide_index=True)
+    ranked = model_summary.sort_values("wape_pct").reset_index(drop=True)
+    model_colors = [
+        "#16a34a" if m == "last_value"
+        else "#f59e0b" if m == "holt_winters"
+        else "#94a3b8"
+        for m in ranked["model"]
+    ]
 
-    st.markdown("### 排程規則")
-    st.markdown(
-        """
-1. **先看交期月**：交期越早，越早排。  
-2. **同一交期月才看優先級**：High 先於 Normal。  
-3. **可以拆批**：同一張訂單可以分散到不同月份。  
-4. **最後完成月份 = 可承諾月份**。  
-5. 最後完成月份晚於交期月 → **🔴 延後**。  
-6. 剛好按期但完成後餘裕 < 10% → **🟠 風險**。  
-7. 否則 → **🟢 按期**。
-        """
+    fig_model = go.Figure()
+    fig_model.add_bar(
+        x=ranked["model"],
+        y=ranked["wape_pct"],
+        text=[f"{v:.3f}%" for v in ranked["wape_pct"]],
+        textposition="outside",
+        marker_color=model_colors,
     )
+    fig_model.update_layout(
+        height=380,
+        yaxis_title="WAPE (%)，越低越好",
+        xaxis_title="",
+        showlegend=False,
+        margin=dict(l=10, r=10, t=25, b=10),
+    )
+    st.plotly_chart(fig_model, use_container_width=True)
 
-    st.markdown("### 資料範圍")
+    fplot = forecast.copy()
+    fplot["月份"] = fplot["date"].map(format_month)
+
+    fig_forecast = go.Figure()
+    fig_forecast.add_scatter(
+        x=fplot["月份"],
+        y=fplot["last_value"],
+        mode="lines+markers+text",
+        name="Last Value（Base）",
+        text=[f"{v:.0f}" for v in fplot["last_value"]],
+        textposition="top center",
+        line=dict(color="#16a34a", width=3),
+    )
+    fig_forecast.add_scatter(
+        x=fplot["月份"],
+        y=fplot["holt_winters"],
+        mode="lines+markers+text",
+        name="Holt-Winters（趨勢參考）",
+        text=[f"{v:.0f}" for v in fplot["holt_winters"]],
+        textposition="bottom center",
+        line=dict(color="#f59e0b", width=3),
+    )
+    fig_forecast.update_layout(
+        height=390,
+        yaxis_title="New Orders Forecast (USD mn)",
+        xaxis_title="",
+        legend_title="",
+        margin=dict(l=10, r=10, t=20, b=10),
+    )
+    st.plotly_chart(fig_forecast, use_container_width=True)
+
+    f1, f2 = st.columns(2)
+    with f1:
+        st.success(
+            "Last Value 為什麼保留？\n\n"
+            "• WAPE 1.851%，四種方法最低\n\n"
+            "• 3 個月都是 5,769\n\n"
+            "• 適合當簡單、穩定的 Base Plan"
+        )
+    with f2:
+        st.warning(
+            "Holt-Winters 為什麼加進來？\n\n"
+            "• WAPE 1.991%，整體只略差\n\n"
+            "• Forecast 5,771 → 5,796 → 5,804\n\n"
+            "• 有趨勢感，可當第二個檢查角度"
+        )
+
     st.info(
-        "公開資料只支援 demand / backlog / forecast analysis。Capacity、Customer Order、Priority、Due Month 都是 Synthetic。這個 Dashboard 展示的是 Planner 決策邏輯，不代表任何公司真實產能或客戶訂單。"
+        f"兩者 3 個月平均 Forecast 差約 +{holt_winters_uplift_pct:.2f}%。"
+        "Dashboard 把這個相對差異轉成一個額外的 Planner 敏感度情境。"
+        "因為 Synthetic units 和公開 Forecast 金額不是同一單位，所以只使用『相對比例』，不做直接單位換算。"
+    )
+
+    st.markdown("**Forecast 證據白話版**")
+    evidence_df = pd.DataFrame(
+        [
+            ["WAPE 1.851%", "Last Value 的整體 Backtest 誤差最低，所以拿來當 Base。"],
+            ["Bias -1.80%", "整體 Prediction 比 Actual 偏低，表示有低估方向。"],
+            ["17 / 18 低估", "18 次近期驗證中有 17 次 Prediction 低於 Actual，不能只相信單一點預測。"],
+            ["Holt-Winters 1.991%", "整體誤差略高，但提供趨勢型的第二觀點。"],
+            ["Upper Reference +2.96%", "不是預測機率，而是用歷史誤差尺度做較保守的需求上修情境。"],
+        ],
+        columns=["證據", "白話意思"],
+    )
+    st.dataframe(evidence_df, use_container_width=True, hide_index=True)
+
+st.divider()
+
+with st.expander("名詞與規則｜不熟 Planner 術語可先看這裡"):
+    st.markdown(
+        """
+- **需求交期月**：希望這張訂單最晚在哪個月完成。
+- **可承諾月份**：依目前 Capacity 排完後，實際算出的最後完成月份。
+- **既有負載**：新單進來以前就已經排好的工作。
+- **安全保留**：刻意保留、不拿來塞一般新單的容量。
+- **高優先級**：只在相同交期月中先排；這是模擬規則，不代表真實客戶價值。
+- **按期**：最後完成月份沒有晚於交期月，也沒有觸發低餘裕風險。
+- **風險**：還能按期，但完成後當月剩餘新訂單容量低於 10%。
+- **延後**：至少有一部分數量被排到交期月之後。
+- **Late Quantity**：真正跨過交期月的那一部分數量，不是整張訂單全部數量。
+- **Spillover**：原本月份塞不下，往後月移動的數量。
+        """
+    )
+
+with st.expander("資料範圍與限制"):
+    st.markdown(
+        """
+- Demand / Backlog / Forecast 使用公開製造業資料。
+- Capacity、Customer、Order Quantity、Priority、Due Month 為 Synthetic Planning Scenario。
+- Dashboard 不代表 ASE / 日月光的真實訂單、產能或交期。
+- Holt-Winters Planner Scenario 是 Dashboard 延伸敏感度測試，不是 06 Notebook 原始固定情境。
+- 自訂 What-if 也是互動模擬，不是 Forecast。
+        """
     )
